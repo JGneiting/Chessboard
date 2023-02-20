@@ -1,6 +1,7 @@
 import unittest
 from GameFiles.StateManager import ChessLogic
 from GameFiles.ChessPieces import *
+from GameFiles.ChessErrors import *
 
 
 class TestBoard(ChessLogic):
@@ -104,6 +105,53 @@ class PawnTests(unittest.TestCase):
         moves = pawn.get_possible_moves()
 
         self.assertEqual(["D3", "C3"], moves)
+
+    def test_forward_team_blocked(self):
+        board = TestBoard(True)
+        pawn = board.create_piece("D2", "Pawn")  # type: Piece
+        board.create_piece("C3", "Pawn", "Black")
+        board.create_piece("D4", "Pawn")
+        board.create_piece("E3", "Pawn")
+
+        moves = pawn.get_possible_moves()
+
+        self.assertEqual(["D3", "C3"], moves)
+
+    def test_double_team_blocked(self):
+        board = TestBoard(True)
+        pawn = board.create_piece("D2", "Pawn")  # type: Piece
+        board.create_piece("D3", "Pawn")
+        board.create_piece("E3", "Pawn")
+
+        moves = pawn.get_possible_moves()
+
+        self.assertEqual(["C3"], moves)
+
+    def test_board_edge(self):
+        board = TestBoard(True)
+        pawn = board.create_piece("A2", "Pawn")  # type: Piece
+        board.create_piece("B3", "Pawn")
+        board.create_piece("A3", "Pawn", "Black")
+
+        moves = pawn.get_possible_moves()
+
+        self.assertEqual([], moves)
+
+    def test_upgrade_raised(self):
+        board = TestBoard(True)
+        pawn = board.create_piece("A8", "Pawn")  # type: Piece
+
+        with self.assertRaises(PawnUpgrade):
+            pawn.get_possible_moves()
+
+
+class RookTests(unittest.TestCase):
+    def test_unobstructed_path(self):
+        board = TestBoard(True)
+        rook = board.create_piece("A1", "Rook")
+
+        moves = rook.get_possible_moves()
+        self.assertEqual(["B1", "C1", "D1", "E1", "F1", "G1", "H1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"], moves)
 
 
 if __name__ == '__main__':

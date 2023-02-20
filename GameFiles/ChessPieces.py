@@ -102,6 +102,7 @@ class RangedPiece(Piece):
                 if not self.board.is_movable(self, square):
                     break
                 move_list.append(square)
+        return move_list
 
 
 class Pawn(Piece):
@@ -118,13 +119,13 @@ class Pawn(Piece):
                 raise PawnUpgrade
         else:
             min = 1
-            if squares[0][0] == squares[1][0] and (not self.board.square_empty(squares[1]) or
-                                                   not self.board.square_empty(squares[0]) or
-                                                   self.moved):
+            if self.location[0] == squares[1][0] and (not self.board.square_empty(squares[1]) or
+                                                      not self.board.square_empty(squares[0]) or
+                                                      self.moved):
                 squares.pop(1)
                 min -= 1
 
-            if not self.board.square_empty(squares[0]):
+            if not self.board.square_empty(squares[0]) or squares[0] != f'{self.location[0]}{int(self.location[1])+1}':
                 squares.pop(0)
                 min -= 1
 
