@@ -22,10 +22,15 @@ board = Board(magnet_pull, magnet_push)
 
 run = True
 invert = "y" == input("Invert Board? (y/n): ")
+if invert:
+    board.invert()
+
+
+
 while run:
     source = input("Source: ")
     dest = input("Destination: ")
-    board.move_piece(source, dest, 2, invert)
+    board.move_piece(source, dest, 2)
     run = "n" != input("Continue? (y/n): ")
 
 board.close()
