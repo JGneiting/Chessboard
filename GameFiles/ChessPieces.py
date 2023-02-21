@@ -13,6 +13,9 @@ class Piece:
         self.team = team
         self.board = board
 
+        if team != "Black" and team != "White":
+            raise TeamError(team)
+
         if team == "Black":
             new_moveset = []
             for pair in self.movement:
@@ -21,6 +24,9 @@ class Piece:
                 y *= -1
                 new_moveset.append((x, y))
             self.movement = new_moveset
+
+    def __deepcopy__(self, memodict={}):
+        return eval(f'{str(self)}(self.abs_location, self.location, self.team, None)')
 
     def get_team(self):
         return self.team
@@ -68,10 +74,9 @@ class Piece:
 
 
 class RangedPiece(Piece):
-    strains = []
-
     def __init__(self, *args):
         super().__init__(*args)
+        self.strains = []
 
         for pair in self.movement:
             strain = []
@@ -86,7 +91,6 @@ class RangedPiece(Piece):
         x, y = self.character_swap(self.location[0]), int(self.location[1])
         move_list = []
         for strain in self.strains:
-            candidates = []
             for move in strain:
                 try:
                     x_new = x + move[0]
@@ -96,12 +100,12 @@ class RangedPiece(Piece):
                         raise OutOfRange
                     if self.board.is_movable(self, f'{x_new}{y_new}'):
                         move_list.append(f'{x_new}{y_new}')
+                    else:
+                        break
+                    if not self.board.square_empty(f'{x_new}{y_new}'):
+                        break
                 except OutOfRange:
                     pass
-            for square in candidates:
-                if not self.board.is_movable(self, square):
-                    break
-                move_list.append(square)
         return move_list
 
 
@@ -119,10 +123,12 @@ class Pawn(Piece):
                 raise PawnUpgrade
         else:
             min = 1
-            if self.location[0] == squares[1][0] and (not self.board.square_empty(squares[1]) or
+            if len(squares) > 1 and self.location[0] == squares[1][0] and (not self.board.square_empty(squares[1]) or
                                                       not self.board.square_empty(squares[0]) or
                                                       self.moved):
                 squares.pop(1)
+                min -= 1
+            elif len(squares) == 1 or squares[0][0] != squares[1][0]:
                 min -= 1
 
             if not self.board.square_empty(squares[0]) or squares[0] != f'{self.location[0]}{int(self.location[1])+1}':
