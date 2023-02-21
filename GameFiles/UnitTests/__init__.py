@@ -25,4 +25,6 @@ class TestBoard(ChessLogic):
         return piece
 
 
+import GameFiles.UnitTests.testPieces
+import GameFiles.UnitTests.testStateManager
 
