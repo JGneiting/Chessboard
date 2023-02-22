@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
-from MotorManager import DualAxis
-from MagnetManager import Magnet
+from BoardFiles.MotorManager import DualAxis
+from BoardFiles.MagnetManager import Magnet
 from time import sleep
 
 
