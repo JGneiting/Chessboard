@@ -1,10 +1,7 @@
 from GameFiles.ChessErrors import *
 
+
 class Piece:
-    abs_location = (0, 0)
-    location = "A1"
-    team = "White"
-    dead = False
     movement = [(0,1)]
 
     def __init__(self, a_loc, loc, team, board):
@@ -12,6 +9,8 @@ class Piece:
         self.location = loc
         self.team = team
         self.board = board
+        self.abs_location = (0, 0)
+        self.dead = False
 
         if team != "Black" and team != "White":
             raise TeamError(team)
@@ -52,7 +51,7 @@ class Piece:
 
     def get_possible_moves(self):
         if self.board.get_turn() != self.team:
-            return ()
+            return []
         x, y = self.character_swap(self.location[0]), int(self.location[1])
         move_list = []
         for move in self.movement:
@@ -131,7 +130,8 @@ class Pawn(Piece):
             elif len(squares) == 1 or squares[0][0] != squares[1][0]:
                 min -= 1
 
-            if not self.board.square_empty(squares[0]) or squares[0] != f'{self.location[0]}{int(self.location[1])+1}':
+            if not self.board.square_empty(squares[0]) or \
+                    squares[0] != f'{self.location[0]}{int(self.location[1])+self.movement[0][1]}':
                 squares.pop(0)
                 min -= 1
 

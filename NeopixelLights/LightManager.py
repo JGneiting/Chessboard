@@ -109,6 +109,7 @@ class BoardLights:
         self.lights = neopixel.NeoPixel(board.D12, self.num_pixels, auto_write=False)
         self.segments = []  # type: list[Segment]
         self.corners = []  # type: list[PlayerSide]
+        self.stop = False
 
         self.segments.append(SegmentLeft(38, False))
         self.segments.append(SegmentUpper(38, False))
@@ -121,17 +122,26 @@ class BoardLights:
         self.lights.fill(self.base_color)
         self.flush()
 
+    def light_ranges(self, ranges, color):
+        for start, end in ranges:
+            self.light_range((start, end), color)
+
     def highlight_square(self, square, color=(255, 255, 255)):
+        self.lights.fill(self.base_color)
+
+        ranges = self.get_pixel_locations(square)
+        self.light_ranges(ranges, color)
+
+        self.flush()
+
+    def get_pixel_locations(self, square):
         char_map = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7}
         row = char_map[square[0]]
         col = int(square[1]) - 1
+        ranges = [self.segments[0].get_segment_location(col), self.segments[2].get_segment_location(col),
+                  self.segments[1].get_segment_location(row), self.segments[3].get_segment_location(row)]
 
-        self.lights.fill(self.base_color)
-        self.light_range(self.segments[0].get_segment_location(col))
-        self.light_range(self.segments[2].get_segment_location(col))
-        self.light_range(self.segments[1].get_segment_location(row))
-        self.light_range(self.segments[3].get_segment_location(row))
-        self.flush()
+        return ranges
 
     def flush(self):
         self.lights.show()
@@ -144,6 +154,23 @@ class BoardLights:
             self.corners[0].set_side(False)
             self.corners[1].activate()
 
-    def light_range(self, pos):
+    def indicate_move(self, source, dest):
+        source_range = self.get_pixel_locations(source)
+        dest_range = self.get_pixel_locations(dest)
+        for i in range(4):
+            self.light_ranges(source_range, (0, 255, 0))
+            self.light_ranges(dest_range, (255, 0, 0))
+            self.flush()
+            time.sleep(0.5)
+            self.light_ranges(source_range, self.base_color)
+            self.light_ranges(dest_range, self.base_color)
+            self.flush()
+            time.sleep(0.5)
+
+    def light_range(self, pos, color):
         for i in range(pos[0], pos[1]):
-            self.lights[i] = self.select_color
+            self.lights[i] = color
+
+    def run_pregame(self):
+        # TODO: Create a pregame show of lights for the homing process
+        pass

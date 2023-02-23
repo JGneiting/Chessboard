@@ -23,7 +23,7 @@ GPIO.output(v5_pin, 1)
 sleep(5)
 
 magnet = Magnet(magnet_pull, magnet_push)
-magnet.activate(push=True)
+magnet.activate(push=False)
 sleep(5)
 magnet.deactivate()
 

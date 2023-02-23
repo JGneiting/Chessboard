@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 from BoardFiles.ChessBoard import Board
 
 
+GPIO.cleanup()
 def get_board():
     set_5v(True)
     set_12v(True)

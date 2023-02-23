@@ -8,6 +8,8 @@ invert = "y" == input("Invert Board? (y/n): ")
 if invert:
     board.invert()
 
+board.move_between("A1", "B3", 2)
+
 run = True
 while run:
     source = input("Source: ")

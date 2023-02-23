@@ -4,7 +4,7 @@ from time import sleep
 
 
 class Board:
-    inverted = False
+    inverted = True
 
     def __init__(self, magnet_pull, magnet_push):
         self.magnet = Magnet(magnet_pull, magnet_push)
@@ -31,11 +31,46 @@ class Board:
             sleep(.05)
 
     def invert(self):
-        self.inverted = True
+        self.inverted = not self.inverted
 
     def move_piece(self, source, destination, time):
         self.move_to_square(source, time)
         self.active_move(destination, time)
+
+    def move_between(self, source, dest, time):
+        """
+        This function requires that source and dest differ by only one in either letter or number
+        :param source: Source square based on chess naming conventions
+        :param dest: Destination square based on chess naming conventions
+        :param time: Time to complete move
+        :return:
+        """
+        start = self.convert_square_to_absolute(source)
+        end = self.convert_square_to_absolute(dest)
+        intermediates = []
+
+        if abs(int(source[1]) - int(dest[1])) == 1:
+            # Intermediate is halfway between in horizontal
+            delta_x = (start[0] + end[0]) / 2
+            delta_y1 = (((start[1] + end[1]) / 2) + start[1]) / 2
+            delta_y2 = ((delta_y1 - start[1]) * 3) + start[1]
+            intermediates.append((delta_x, delta_y1))
+            intermediates.append((delta_x, delta_y2))
+        else:
+            # Intermediate is halfway between in vertical
+            delta_x1 = (((start[0] + end[0]) / 2) + start[0]) / 2
+            delta_x2 = ((delta_x1 - start[0]) * 3) + start[0]
+            delta_y = (start[1] + end[1]) / 2
+            intermediates.append((delta_x1, delta_y))
+            intermediates.append((delta_x2, delta_y))
+        self.move_to_square(source, time/4)
+        self.magnet.pulse(20)
+        self.axis.move_axes(intermediates[0][0], intermediates[0][1])
+        self.axis.move_axes(intermediates[1][0], intermediates[1][1])
+        self.location = (intermediates[1][0], intermediates[1][1])
+        self.magnet.set_duty_cycle(100)
+        self.move_to_square(dest, time/4, True)
+        self.magnet.deactivate()
 
     def move_to_square(self, square, time, compensate=False):
         """

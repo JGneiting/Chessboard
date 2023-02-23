@@ -122,6 +122,19 @@ class PawnTests(unittest.TestCase):
         with self.assertRaises(PawnUpgrade):
             pawn.get_possible_moves()
 
+    def test_multiple_teams(self):
+        board = TestBoard()
+        white_pawn = board.create_piece("A2", "Pawn")
+        black_pawn = board.create_piece("A7", "Pawn", "Black")
+
+        self.assertEqual(["A3", "A4"], white_pawn.get_possible_moves())
+        self.assertEqual([], black_pawn.get_possible_moves())
+
+        board.move_piece("A2", "A4")
+
+        self.assertEqual([], white_pawn.get_possible_moves())
+        self.assertEqual(["A6", "A5"], black_pawn.get_possible_moves())
+
 
 class RookTests(unittest.TestCase):
     def test_unobstructed_path(self):
