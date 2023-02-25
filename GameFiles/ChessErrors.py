@@ -44,3 +44,9 @@ class UnknownSquare(Exception):
 
     def __init__(self, attempt):
         super().__init__(f'"{attempt}" is not a valid chess square. Inputs must be between A1 and H8')
+
+
+class PlayerError(Exception):
+
+    def __init__(self):
+        super().__init__(f"Too many players added to the game!")

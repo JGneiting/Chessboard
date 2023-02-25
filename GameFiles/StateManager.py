@@ -113,7 +113,7 @@ class ChessLogic(InternalBoard):
                 self.in_check = False
                 success = True
                 self.run_check_cycle()
-                self.turn = self.get_opposing_team(self.turn)
+                self.next_player()
             else:
                 raise InvalidMove(dest, move_set)
         return success
@@ -158,6 +158,18 @@ class ChessLogic(InternalBoard):
                     if moves:
                         team_moves[piece.get_location()] = moves
         return team_moves
+
+    def get_team_pieces(self, team):
+        pieces = []
+        for i in range(8):
+            for j in range(8):
+                if self.board[i][j] is not None and self.board[i][j].get_team() == team:
+                    pieces.append(self.board[i][j])
+        return pieces
+
+    def next_player(self):
+        self.turn = self.get_opposing_team(self.turn)
+
 
 class Simulator(ChessLogic):
     def __init__(self, source):
