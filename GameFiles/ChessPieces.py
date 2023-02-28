@@ -116,25 +116,35 @@ class Pawn(Piece):
         self.moved = False
 
     def get_possible_moves(self):
-        squares = super().get_possible_moves()
-        if len(squares) == 0:
-            if int(self.location[1]) == 1 or int(self.location[1]) == 8:
-                raise PawnUpgrade
-        else:
-            min = 1
-            if len(squares) > 1 and self.location[0] == squares[1][0] and (not self.board.square_empty(squares[1]) or not self.board.square_empty(squares[0]) or self.moved):
-                squares.pop(1)
-                min -= 1
-            elif len(squares) == 1 or squares[0][0] != squares[1][0]:
-                min -= 1
+        if self.board.get_turn() != self.team:
+            return []
+        squares = []
+        if int(self.location[1]) == 1 or int(self.location[1]) == 8:
+            raise PawnUpgrade
+        x, y = self.character_swap(self.location[0]), int(self.location[1])
+        y_new = y + self.movement[0][1]
+        try:
+            target = f'{self.character_swap(x)}{y_new}'
+            if self.board.square_empty(target) and self.board.is_movable(self, target):
+                squares.append(target)
+                if not self.moved:
+                    target = f'{self.character_swap(x)}{y_new + self.movement[0][1]}'
+                    if self.board.square_empty(target) and self.board.is_movable(self, target):
+                        squares.append(target)
+        except OutOfRange:
+            pass
+        except UnknownSquare:
+            pass
 
-            if not self.board.square_empty(squares[0]) or squares[0] != f'{self.location[0]}{int(self.location[1])+self.movement[0][1]}':
-                squares.pop(0)
-                min -= 1
-
-            for i in range(len(squares)-1, min, -1):
-                if self.board.square_empty(squares[i]):
-                    squares.pop(i)
+        for move in self.movement[2:]:
+            try:
+                occupant = self.board.get_square(f'{self.character_swap(move[0] + x)}{move[1] + y}')
+                if occupant is not None and occupant.get_team() != self.team and self.board.is_movable(self, f'{self.character_swap(move[0] + x)}{move[1] + y}'):
+                    squares.append(f'{self.character_swap(move[0] + x)}{move[1] + y}')
+            except OutOfRange:
+                pass
+            except UnknownSquare:
+                pass
 
         return squares
 
