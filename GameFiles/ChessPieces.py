@@ -24,6 +24,9 @@ class Piece:
                 new_moveset.append((x, y))
             self.movement = new_moveset
 
+    def kill(self):
+        self.dead = True
+
     def __deepcopy__(self, memodict={}):
         return eval(f'{str(self)}(self.abs_location, self.location, self.team, None)')
 
@@ -42,7 +45,6 @@ class Piece:
             for key, value in char_map.items():
                 if value == char:
                     return key
-            raise OutOfRange
         else:
             try:
                 return char_map[char]
@@ -86,7 +88,7 @@ class RangedPiece(Piece):
 
     def get_possible_moves(self):
         if self.board.get_turn() != self.team:
-            return ()
+            return []
         x, y = self.character_swap(self.location[0]), int(self.location[1])
         move_list = []
         for strain in self.strains:
@@ -120,16 +122,13 @@ class Pawn(Piece):
                 raise PawnUpgrade
         else:
             min = 1
-            if len(squares) > 1 and self.location[0] == squares[1][0] and (not self.board.square_empty(squares[1]) or
-                                                      not self.board.square_empty(squares[0]) or
-                                                      self.moved):
+            if len(squares) > 1 and self.location[0] == squares[1][0] and (not self.board.square_empty(squares[1]) or not self.board.square_empty(squares[0]) or self.moved):
                 squares.pop(1)
                 min -= 1
             elif len(squares) == 1 or squares[0][0] != squares[1][0]:
                 min -= 1
 
-            if not self.board.square_empty(squares[0]) or \
-                    squares[0] != f'{self.location[0]}{int(self.location[1])+self.movement[0][1]}':
+            if not self.board.square_empty(squares[0]) or squares[0] != f'{self.location[0]}{int(self.location[1])+self.movement[0][1]}':
                 squares.pop(0)
                 min -= 1
 
@@ -162,3 +161,16 @@ class King(Piece):
 
 class Queen(RangedPiece):
     movement = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
+
+
+class GhostPawn(Pawn):
+
+    def __init__(self, linked_pawn, location, team, board):
+        super().__init__((0, 0), location, team, board)
+        self.link = linked_pawn
+
+    def __deepcopy__(self, memodict={}):
+        return eval(f"GhostPawn(self.link, self.location, self.team, self.board)")
+
+    def get_linked_pawn(self):
+        return self.link

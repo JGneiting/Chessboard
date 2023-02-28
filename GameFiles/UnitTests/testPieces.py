@@ -1,10 +1,33 @@
 import unittest
 from GameFiles.UnitTests import TestBoard
-from GameFiles.ChessErrors import PawnUpgrade
+from GameFiles.ChessErrors import PawnUpgrade, TeamError
 from GameFiles.ChessPieces import Piece
 
 
 class PawnTests(unittest.TestCase):
+    def test_en_pasants(self):
+        board = TestBoard()
+        pawnW = board.create_piece("A2", "Pawn")
+        pawn = board.create_piece("B4", "Pawn", "Black")
+
+        board.move_piece("A2", "A4")
+
+        moves = pawn.get_possible_moves()
+        self.assertIn("A3", moves)
+        self.assertTrue(pawnW.dead)
+
+    def test_invalid_team(self):
+        board = TestBoard(True)
+        with self.assertRaises(TeamError):
+            pawn = board.create_piece("A2", "Pawn", "Orange")
+
+    def test_out_of_turn(self):
+        board = TestBoard(True)
+        pawn = board.create_piece("A7", "Pawn", "Black")
+
+        moves = pawn.get_possible_moves()
+        self.assertEqual([], moves)
+
     def test_forward_first(self):
         board = TestBoard(True)
         pawn = board.create_piece("D2", "Pawn")  # type: Piece

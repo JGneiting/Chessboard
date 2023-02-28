@@ -30,6 +30,7 @@ class ExtendedCheckTest(unittest.TestCase):
         self.assertEqual(["E2"], bishopW.get_possible_moves())
         self.assertEqual(["E2"], knightW2.get_possible_moves())
         self.assertEqual(["E3", "E5"], queenW.get_possible_moves())
+        self.assertEqual(["F2", "D2", "D1"], kingW.get_possible_moves())
 
         board.move_piece("C3", "E5")
         self.assertFalse(board.in_check)

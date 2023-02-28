@@ -8,6 +8,7 @@ class InternalBoard:
     def __init__(self):
         self.board = [[None] * 8 for i in range(8)]  # type: list[list[Piece]]
         self.captured = []
+        self.ghosts = []
         self.in_check = None
         self.turn = "White"
 
@@ -42,7 +43,7 @@ class InternalBoard:
     def get_valid_moves(self, square):
         if not self.square_empty(square):
             return self.get_square(square).get_possible_moves()
-        return ()
+        return []
 
     def get_opposing_team(self, team):
         if team == "White":
@@ -102,10 +103,22 @@ class ChessLogic(InternalBoard):
             move_set = occupant.get_possible_moves()
             if move_set is not None and dest in move_set:
                 capture = self.get_square(dest)
+                if str(capture) == "GhostPawn":
+                    capture = capture.get_linked_pawn()
+                for ghost in self.ghosts:
+                    self.set_square(ghost.get_location(), None)
+                    del ghost
+                self.ghosts = []
                 if capture is not None:
+                    capture.kill()
                     self.capture(capture, dest)
                 if str(occupant) == "Pawn":
                     occupant.remove_double()
+                    if abs(int(occupant.get_location()[1]) - int(dest[1])) == 2:
+                        passed_square = f"{dest[0]}{int((int(occupant.get_location()[1]) + int(dest[1]))/2)}"
+                        ghost = GhostPawn(occupant, passed_square, occupant.get_team(), self)
+                        self.set_square(passed_square, ghost)
+                        self.ghosts.append(ghost)
                 occupant.set_location(dest)
                 self.set_square(source, None)
                 self.set_square(dest, occupant)

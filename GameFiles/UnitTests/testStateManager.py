@@ -5,6 +5,24 @@ from GameFiles.ChessErrors import *
 
 
 class CheckLogic(unittest.TestCase):
+    def test_moves_square(self):
+        board = TestBoard()
+        board.create_piece("A2", "Pawn")
+
+        moves = board.get_valid_moves("A2")
+        self.assertEqual(["A3", "A4"], moves)
+
+        moves = board.get_valid_moves("A5")
+        self.assertEqual([], moves)
+
+    def test_getting_team_pieces(self):
+        board = TestBoard()
+        p1 = board.create_piece("A2", "Pawn")
+        p2 = board.create_piece("A3", "Pawn")
+
+        pieces = board.get_team_pieces("White")
+        self.assertEqual([p1, p2], pieces)
+
     def test_detection(self):
         board = TestBoard()
         board.create_piece("A1", "Rook")
@@ -150,7 +168,3 @@ class GameFlowTests(unittest.TestCase):
 
         with self.assertRaises(UnknownSquare):
             board.move_piece("Q3", "C0")
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,4 +1,3 @@
-import unittest
 from GameFiles.StateManager import ChessLogic
 from GameFiles.ChessPieces import *
 
@@ -25,6 +24,4 @@ class TestBoard(ChessLogic):
         return piece
 
 
-import GameFiles.UnitTests.testPieces
-import GameFiles.UnitTests.testStateManager
 
