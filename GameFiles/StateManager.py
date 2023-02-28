@@ -109,8 +109,7 @@ class ChessLogic(InternalBoard):
                 occupant.set_location(dest)
                 self.set_square(source, None)
                 self.set_square(dest, occupant)
-                # TODO: This is where destination command will be sent out
-                self.in_check = False
+                self.in_check = None
                 success = True
                 self.run_check_cycle()
                 self.next_player()
@@ -124,6 +123,7 @@ class ChessLogic(InternalBoard):
 
     def run_check_cycle(self):
         state = self.turn
+        self.turn = self.get_opposing_team(self.turn)
         try:
             for q in range(2):
                 for i in range(8):
@@ -140,6 +140,9 @@ class ChessLogic(InternalBoard):
             self.in_check = self.get_opposing_team(self.turn)
             self.checkmate_test()
             self.turn = state
+            return
+        self.turn = state
+        self.in_check = None
 
     def checkmate_test(self):
         temp = self.turn

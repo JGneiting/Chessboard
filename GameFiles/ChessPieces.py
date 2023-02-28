@@ -99,8 +99,6 @@ class RangedPiece(Piece):
                         raise OutOfRange
                     if self.board.is_movable(self, f'{x_new}{y_new}'):
                         move_list.append(f'{x_new}{y_new}')
-                    else:
-                        break
                     if not self.board.square_empty(f'{x_new}{y_new}'):
                         break
                 except OutOfRange:
