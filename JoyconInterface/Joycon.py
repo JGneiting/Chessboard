@@ -1,6 +1,9 @@
+import math
+
 from pyjoycon import get_L_id, get_R_id, ButtonEventJoyCon
 from GameFiles.GameInterface import Player
 from NeopixelLights.LightInterface import LightsInterface
+from JoyconInterface.RumbleJoycon import RumbleJoyCon, RumbleData
 import numpy as np
 import threading
 import queue
@@ -8,7 +11,7 @@ import time
 
 
 class StickMonitor(threading.Thread):
-    tolerance = 100
+    tolerance = 350
     bouncetime = .5
 
     def __init__(self, thread_id, name, counter, stick_type, callback, joycon, quit_queue):
@@ -27,8 +30,17 @@ class StickMonitor(threading.Thread):
         else:
             return self.joycon.get_stick_right_vertical(), self.joycon.get_stick_right_horizontal()
 
+    def get_home(self):
+        home = [0, 0]
+        for i in range(10):
+            x, y = self.get_stick()
+            home[0] += x
+            home[1] += y
+            time.sleep(.25)
+        return home[0] / 10, home[1] / 10
+
     def run(self):
-        home = self.get_stick()
+        home = self.get_home()
         while self.quit.empty():
             current = self.get_stick()
             if abs(current[0] - home[0]) > self.tolerance or abs(current[1] - home[1]) > self.tolerance:
@@ -37,8 +49,9 @@ class StickMonitor(threading.Thread):
             time.sleep(.1)
 
 
-class StandardChessJoycon(ButtonEventJoyCon, Player):
+class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
     controller_count = 1
+    rumble_type = RumbleData(400, 800, .8)
 
     def __init__(self, side, game_interface, light_interface=None):
         if side == "LEFT":
@@ -49,6 +62,7 @@ class StandardChessJoycon(ButtonEventJoyCon, Player):
             self.delta = 1
         ButtonEventJoyCon.__init__(self, *id_, track_sticks=True)
         Player.__init__(self, game_interface)
+        self.enable_vibration()
         self.set_player_lamp(self.controller_count)
         self.controller_count += 1
 
@@ -59,9 +73,13 @@ class StandardChessJoycon(ButtonEventJoyCon, Player):
         self.stick_monitor = StickMonitor(4, "Monitor", 4, side, self.stick_event, self, self.stick_halt)
         self.stick_monitor.start()
 
-        self.cursor = None
+        self.cursor = self.query_pieces()[0].get_location()
         self.stick_home = (0, 0)
         self.stick_home = self.get_stick()
+
+        self.selected = None
+        if self.color == "White":
+            self.select_first()
 
     def __del__(self):
         self.stick_halt.put(0)
@@ -82,55 +100,135 @@ class StandardChessJoycon(ButtonEventJoyCon, Player):
 
     def draw_cursor(self):
         if self.lights:
+            print(f"Drawing Cursor: {self.cursor}")
             if self.state_function == self.piece_selection:
-                # TODO: LightsInterface needs multi-cursor support
-                self.lights.select_square(self.cursor)
+                self.lights.select_square(self.cursor, 0)
             else:
-                self.lights.select_square(self.cursor)
+                self.lights.select_square(self.cursor, 1)
 
     def select_first(self):
         pieces = self.query_pieces()
         self.cursor = pieces[0].location
-        self.draw_cursor()
+        self.lights.select_square(self.cursor, 0)
 
-    def select_in_direction(self, direction):
-        # TODO: Need to select the next valid square in the indicated direction
-        pass
+    def translate_square(self, square):
+        translation = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8}
+        x = translation[square[0]]
+        y = int(square[1])
+        return x, y
+
+    def translate_point(self, point):
+        translation = {1:'A', 2:'B', 3:'C', 4:'D', 5:'E', 6:'F', 7:'G', 8:'H'}
+        square = f'{translation[point[0]]}{point[1]}'
+        return square
+
+    def create_map(self, squares):
+        coords = []
+        for square in squares:
+            x, y = self.translate_square(square)
+            coords.append((x, y))
+        return coords
+
+    def get_vector(self, theta):
+        return np.cos(theta), np.sin(theta)
+
+    def select_in_direction(self, direction, plot):
+        angle_deltas = []
+        distances = []
+        source = self.translate_square(self.cursor)
+        direction = (direction * np.pi) / 180
+        for point in plot:
+            dx = point[0] - source[0]
+            dy = point[1] - source[1]
+            dist = math.sqrt(dx**2 + dy**2)
+            distances.append(dist)
+            vec_1 = (dx, dy)
+            vec_2 = self.get_vector(direction)
+            angle_deltas.append(self.angle_between_vectors(vec_1, vec_2))
+        if len(distances) != 0:
+            fitness = []
+            for distance, angle in zip(distances, angle_deltas):
+                score = angle ** math.sqrt(distance) + (distance**3)
+                fitness.append(score)
+
+            # threshold = 45 ** math.sqrt(min(distances)) + (min(distances)**3)
+            threshold = 1
+            min_fitness = 0
+            for i in range(1, len(fitness)):
+                if fitness[i] < fitness[min_fitness]:
+                    min_fitness = i
+
+            if fitness[min_fitness] < threshold:
+                self.cursor = self.translate_point(plot[min_fitness])
+
+    def move_selection(self, button, state):
+        if self.query_my_turn():
+            if button == "Joystick":
+                moves = self.selected.get_possible_moves()
+                try:
+                    moves.remove(self.cursor)
+                except ValueError:
+                    pass
+                source_map = self.create_map(moves)
+                self.select_in_direction(state, source_map)
+                self.draw_cursor()
+            if (button == 'x' or button == 'down') and state:
+                if self.lights:
+                    self.lights.indicate_move(self.selected.get_location(), self.cursor)
+                self.make_move(self.selected.get_location(), self.cursor)
+                self.state_function = self.piece_selection
+            if (button == 'a' or button == 'left') and state:
+                self.cursor = self.selected.get_location()
+                self.state_function = self.piece_selection
+                self.draw_cursor()
 
     def piece_selection(self, button, state):
-        if button == "":
-            pass
+        if self.query_my_turn():
+            if button == "Joystick":
+                pieces = self.query_pieces()
+                squares = [piece.get_location() for piece in pieces]
+                try:
+                    squares.remove(self.cursor)
+                except ValueError:
+                    pass
+                source_map = self.create_map(squares)
+                self.select_in_direction(state, source_map)
+                self.draw_cursor()
+            if (button == 'x' or button == 'down') and state:
+                try:
+                    self.selected = self.query_square(self.cursor)
+                    self.cursor = self.selected.get_possible_moves()[0]
+                    self.state_function = self.move_selection
+                    self.draw_cursor()
+                except IndexError:
+                    self._send_rumble(self.rumble_type.GetData())
 
     def joycon_button_event(self, button, state):
-        print(button)
-        print(self.board)
+        print(f"{button}: {state}")
         if self.board is not None:
             if self.query_my_turn():
                 self.state_function(button, state)
 
     def stick_event(self):
+        print("Event")
         x, y = self.get_stick()
-        theta = np.arccos((np.dot((x, y), (1, 0)) / np.sqrt(np.dot((x, y), (x, y)))))
+        if (self.inverted and self.side == "RIGHT") or (not self.inverted and self.side == "LEFT"):
+            x *= -1
+            y *= -1
+        try:
+            theta = self.angle_between_vectors((x, y), (1, 0))
+            if y > 0:
+                theta *= -1
+                theta += 360
+            self.state_function("Joystick", theta)
+        except ValueError:
+            pass
+
+    def angle_between_vectors(self, vec_1, vec_2):
+        theta = np.arccos((np.dot((vec_1[0], vec_1[1]), (vec_2[0], vec_2[1])) /
+                           (np.sqrt(np.dot((vec_1[0], vec_1[1]), (vec_1[0], vec_1[1]))))) *
+                          np.sqrt(np.dot((vec_2[0], vec_2[1]), (vec_2[0], vec_2[1]))))
         theta /= np.pi
         theta *= 180
-        if y > 0:
-            theta *= -1
-            theta += 360
         theta = round(theta)
-        if theta <= 22.5 or theta > 337.5:
-            stick_dir = (1, 0)
-        elif theta <= 67.5:
-            stick_dir = (1, 1)
-        elif theta <= 112.5:
-            stick_dir = (0, 1)
-        elif theta <= 157.5:
-            stick_dir = (-1, 1)
-        elif theta <= 202.5:
-            stick_dir = (-1, 0)
-        elif theta <= 247.5:
-            stick_dir = (-1, -1)
-        elif theta <= 292.5:
-            stick_dir = (0, -1)
-        elif theta <= 337.5:
-            stick_dir = (1, -1)
-        self.select_in_direction(stick_dir)
+        return theta

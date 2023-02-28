@@ -1,5 +1,6 @@
 from GameFiles.StateManager import ChessLogic
 from GameFiles.ChessErrors import PlayerError
+import time
 
 
 class Player:
@@ -7,6 +8,8 @@ class Player:
     def __init__(self, game_interface):
         self.board = game_interface  # type: GameInterface
         self.color = game_interface.add_player(self)
+        self.inverted = self.color == "Black"
+        print(self.color)
 
     def my_turn(self):
         pass
@@ -36,7 +39,9 @@ class Player:
 
 class GameInterface(ChessLogic):
     team_order = ["White", "Black"]
+    movement_time = 1.5
     assigned = 0
+    move = None
 
     def __init__(self):
         super().__init__()
@@ -47,7 +52,7 @@ class GameInterface(ChessLogic):
         if self.assigned < 2:
             self.players.append(interface)
             self.assigned += 1
-            return self.team_order[self.assigned]
+            return self.team_order[self.assigned - 1]
         else:
             raise PlayerError
 
@@ -55,4 +60,16 @@ class GameInterface(ChessLogic):
         super().next_player()
         for player in self.players:
             if player.color == self.turn:
+                print(f"It is {self.turn}'s turn")
                 player.my_turn()
+
+    def move_piece(self, source, dest):
+        super().move_piece(source, dest)
+        self.move = (source, dest)
+
+    def get_move(self):
+        while self.move is None:
+            time.sleep(.1)
+        temp = self.move
+        self.move = None
+        return temp

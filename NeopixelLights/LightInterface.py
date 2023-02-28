@@ -22,7 +22,8 @@ class ThreadedLights(threading.Thread):
                 self.lights.run_pregame()
             elif command == "Select":
                 square = self.queue.get(block=True)
-                self.lights.highlight_square(square)
+                slot = self.queue.get(block=True)
+                self.lights.highlight_square(square, slot)
             elif command == "Turn":
                 team = self.queue.get(block=True)
                 self.lights.indicate_player(team)
@@ -47,9 +48,10 @@ class LightsInterface:
     def run_pregame(self):
         self.commands.put("Pregame")
 
-    def select_square(self, square):
+    def select_square(self, square, slot):
         self.commands.put("Select")
         self.commands.put(square)
+        self.commands.put(slot)
 
     def set_team(self, team):
         self.commands.put("Turn")
