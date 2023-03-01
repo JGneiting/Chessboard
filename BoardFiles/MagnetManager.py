@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import time
 
 
 class Magnet:
@@ -14,10 +15,13 @@ class Magnet:
 
     def activate(self, push=False):
         if push:
-            self.push_pin.start(100)
             self.pull_pin.stop()
-        self.pull_pin.start(100)
-        self.push_pin.stop()
+            time.sleep(0.1)
+            self.push_pin.start(100)
+        else:
+            self.push_pin.stop()
+            time.sleep(0.1)
+            self.pull_pin.start(100)
 
     def set_duty_cycle(self, duty_cycle):
         self.pull_pin.ChangeDutyCycle(duty_cycle)
@@ -27,5 +31,12 @@ class Magnet:
         self.pull_pin.stop()
         self.push_pin.stop()
 
-    def pulse(self, duty_cycle):
-        self.pull_pin.start(duty_cycle)
+    def pulse(self, duty_cycle, push=False):
+        if push:
+            self.pull_pin.stop()
+            time.sleep(0.1)
+            self.push_pin.start(duty_cycle)
+        else:
+            self.push_pin.stop()
+            time.sleep(0.1)
+            self.pull_pin.start(duty_cycle)

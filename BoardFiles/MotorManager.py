@@ -203,6 +203,8 @@ class ThreadedAxis(threading.Thread):
                 self.status.put(1)
                 self.status.put(1)
 
+        print("Motor Exiting")
+
 
 class DualAxis:
 

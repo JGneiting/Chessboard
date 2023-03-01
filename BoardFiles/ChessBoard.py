@@ -18,13 +18,16 @@ class Board:
         self.overshoot = .0025
         self.rail_compensate = .0015
 
+    def cleanup(self):
+        self.close()
+
     def active_move(self, square, time):
         self.magnet.activate()
         self.move_to_square(square, time, compensate=True)
         self.move_to_square(square, .25)
         sleep(.5)
         self.magnet.deactivate()
-        for i in range(10):
+        for i in range(2):
             self.magnet.activate()
             sleep(.05)
             self.magnet.deactivate()

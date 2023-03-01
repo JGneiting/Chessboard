@@ -94,6 +94,7 @@ class RangedPiece(Piece):
         for strain in self.strains:
             for move in strain:
                 try:
+                    # TODO: ranged pieces should not be blocked by GhostPawns
                     x_new = x + move[0]
                     y_new = y + move[1]
                     x_new = self.character_swap(x_new)

@@ -14,14 +14,14 @@ class StickMonitor(threading.Thread):
     tolerance = 350
     bouncetime = .5
 
-    def __init__(self, thread_id, name, counter, stick_type, callback, joycon, quit_queue):
+    def __init__(self, thread_id, name, counter, stick_type, callback, joycon, comm_queue):
         super().__init__()
         self.threadID = thread_id
         self.name = name
         self.counter = counter
         self.event_callback = callback
         self.joycon = joycon  # type: ButtonEventJoyCon
-        self.quit = quit_queue  # type: queue.Queue
+        self.message = comm_queue  # type: queue.Queue
         self.stick_type = stick_type
 
     def get_stick(self):
@@ -41,12 +41,22 @@ class StickMonitor(threading.Thread):
 
     def run(self):
         home = self.get_home()
-        while self.quit.empty():
+        run = True
+        while run:
             current = self.get_stick()
             if abs(current[0] - home[0]) > self.tolerance or abs(current[1] - home[1]) > self.tolerance:
                 self.event_callback()
                 time.sleep(self.bouncetime)
             time.sleep(.1)
+            if not self.message.empty():
+                message = self.message.get()
+                if message == 0:
+                    run = False
+                elif message == "Recalibrate":
+                    time.sleep(.5)
+                    home = self.get_home()
+
+        print("Stick Monitor Exiting")
 
 
 class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
@@ -69,26 +79,38 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         self.lights = light_interface  # type: LightsInterface
         self.side = side
         self.state_function = self.piece_selection
-        self.stick_halt = queue.Queue()
-        self.stick_monitor = StickMonitor(4, "Monitor", 4, side, self.stick_event, self, self.stick_halt)
+        self.monitor_comm = queue.Queue()
+        self.stick_monitor = StickMonitor(4, "Monitor", 4, side, self.stick_event, self, self.monitor_comm)
         self.stick_monitor.start()
 
         self.cursor = self.query_pieces()[0].get_location()
-        self.stick_home = (0, 0)
-        self.stick_home = self.get_stick()
+        self.stick_home = self.get_home()
 
         self.selected = None
         if self.color == "White":
             self.select_first()
 
-    def __del__(self):
-        self.stick_halt.put(0)
-        self.stick_halt.join()
-        ButtonEventJoyCon.__del__(self)
-        Player.__del__(self)
+    def cleanup(self):
+        self.monitor_comm.put(0)
+        self.stick_monitor.join()
+
+    def get_home(self):
+        home = [0, 0]
+        for i in range(10):
+            x, y = self.get_raw_stick()
+            home[0] += x
+            home[1] += y
+            time.sleep(.25)
+        return home[0] / 10, home[1] / 10
 
     def my_turn(self):
         self.select_first()
+
+    def get_raw_stick(self):
+        if self.side == "LEFT":
+            return self.get_stick_left_vertical(), self.get_stick_left_horizontal()
+        else:
+            return self.get_stick_right_vertical(), self.get_stick_right_horizontal()
 
     def get_stick(self):
         if self.side == "LEFT":
@@ -148,18 +170,17 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         if len(distances) != 0:
             fitness = []
             for distance, angle in zip(distances, angle_deltas):
-                score = angle ** math.sqrt(distance) + (distance**3)
+                score = (angle ** 3) + distance
                 fitness.append(score)
 
-            # threshold = 45 ** math.sqrt(min(distances)) + (min(distances)**3)
-            threshold = 1
+            # threshold = max(distances)**2
             min_fitness = 0
             for i in range(1, len(fitness)):
                 if fitness[i] < fitness[min_fitness]:
                     min_fitness = i
 
-            if fitness[min_fitness] < threshold:
-                self.cursor = self.translate_point(plot[min_fitness])
+            # if fitness[min_fitness] < threshold:
+            self.cursor = self.translate_point(plot[min_fitness])
 
     def move_selection(self, button, state):
         if self.query_my_turn():
@@ -203,11 +224,17 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
                 except IndexError:
                     self._send_rumble(self.rumble_type.GetData())
 
+    def recalibrate(self):
+        self.stick_home = self.get_home()
+
     def joycon_button_event(self, button, state):
         print(f"{button}: {state}")
         if self.board is not None:
             if self.query_my_turn():
-                self.state_function(button, state)
+                if (button == "zl" or button == "zr") and state:
+                    self.recalibrate()
+                else:
+                    self.state_function(button, state)
 
     def stick_event(self):
         print("Event")

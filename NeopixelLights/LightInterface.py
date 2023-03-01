@@ -15,8 +15,8 @@ class ThreadedLights(threading.Thread):
         self.lights = BoardLights()
 
     def run(self):
-        status = 0
-        while status != -1:
+        command = 0
+        while command != -1:
             command = self.queue.get(block=True)
             if command == "Pregame":
                 self.lights.run_pregame()
@@ -32,6 +32,8 @@ class ThreadedLights(threading.Thread):
                 dest = self.queue.get(block=True)
                 self.lights.indicate_move(source, dest)
 
+        print("Lights Exiting")
+
 
 class LightsInterface:
 
@@ -41,7 +43,7 @@ class LightsInterface:
 
         self.command_thread.start()
 
-    def __del__(self):
+    def cleanup(self):
         self.commands.put(-1)
         self.command_thread.join()
 

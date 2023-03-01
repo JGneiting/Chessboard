@@ -1,5 +1,5 @@
 from GameFiles.StateManager import ChessLogic
-from GameFiles.ChessErrors import PlayerError
+from GameFiles.ChessErrors import *
 import time
 
 
@@ -33,7 +33,7 @@ class Player:
         # TODO: This function will need to be overridden to handle querying a piece type from the user
         return None
 
-    def __del__(self):
+    def cleanup(self):
         pass
 
 
@@ -43,10 +43,15 @@ class GameInterface(ChessLogic):
     assigned = 0
     move = None
 
-    def __init__(self):
+    def __init__(self, error_queue=None):
         super().__init__()
 
         self.players = []
+        self.error_report = error_queue
+
+    def cleanup(self):
+        for player in self.players:
+            player.cleanup()
 
     def add_player(self, interface):
         if self.assigned < 2:
@@ -64,12 +69,25 @@ class GameInterface(ChessLogic):
                 player.my_turn()
 
     def move_piece(self, source, dest):
-        super().move_piece(source, dest)
-        self.move = (source, dest)
+        try:
+            self.move = (source, dest)
+            super().move_piece(source, dest)
+            return
+        except Checkmate as e:
+            if self.error_report:
+                self.error_report.put(e)
+        except TurnError as e:
+            if self.error_report:
+                self.error_report.put(e)
+        except InvalidMove as e:
+            if self.error_report:
+                self.error_report.put(e)
 
     def get_move(self):
         while self.move is None:
             time.sleep(.1)
+            if not self.error_report.empty():
+                break
         temp = self.move
         self.move = None
         return temp
