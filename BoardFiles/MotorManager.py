@@ -219,10 +219,10 @@ class DualAxis:
         self.base_steps = 0
         self.center_steps = 0
 
-        self.base_axis = ThreadedAxis(1, "Base-Axis", 1, self.base_queue, self.base_status, (16, 20, 21, 5, 25),
+        self.base_axis = ThreadedAxis(1, "Base-Axis", 1, self.base_queue, self.base_status, (16, 20, 13, 5, 25),
                                       self.base_lock, self.center_lock)
         self.center_axis = ThreadedAxis(2, "Center-Axis", 2, self.center_queue, self.center_status,
-                                        (13, 19, 26, 24, 23), self.center_lock, self.base_lock)
+                                        (12, 19, 26, 24, 23), self.center_lock, self.base_lock)
 
         self.base_axis.start()
         self.center_axis.start()
