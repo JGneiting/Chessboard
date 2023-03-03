@@ -15,8 +15,6 @@ class SoundManager(threading.Thread):
         self.commands = command_queue  # type: Queue
         self.callback = None
 
-        pygame.mixer.init()
-        pygame.init()
         set_5v(True)
         self.currently_playing = False
         self.num_channels = channels
@@ -51,7 +49,8 @@ class SoundManager(threading.Thread):
         if self.channels[channel].get_busy():
             self.channels[channel].fadeout(500)
             pygame.time.delay(500)
-        self.channels[channel].play(selected_sound, loops, max_time, fade_ms)
+        # self.channels[channel].play(selected_sound, loops, max_time, fade_ms)
+        selected_sound.play()
         self.set_channel_volume(channel, volume)
         self.currently_playing = True
 

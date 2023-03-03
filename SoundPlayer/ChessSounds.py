@@ -25,15 +25,15 @@ class StandardChessBackground(BackgroundChannel):
 
 
 class IntroMusic(StandardChessBackground):
-    song_lib = "GameSounds/Intro"
+    song_lib = "SoundPlayer/GameSounds/Intro"
 
 
 class MidrollMusic(StandardChessBackground):
-    song_lib = "GameSounds/Midroll"
+    song_lib = "SoundPlayer/GameSounds/Midroll"
 
 
 class OutroMusic(StandardChessBackground):
-    song_lib = "GameSounds/Outro"
+    song_lib = "SoundPlayer/GameSounds/Outro"
 
 
 class ChessSFX(SoundChannel):

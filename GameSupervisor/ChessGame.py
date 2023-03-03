@@ -20,6 +20,8 @@ class ChessGame:
         self.audio.run_intro()
         self.board = BoardLogic()
 
+        time.sleep(5)
+
         self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights)
         self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights)
 

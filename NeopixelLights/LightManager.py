@@ -109,7 +109,7 @@ class BoardLights:
     slot_colors = [(255, 255, 0), (0, 255, 0)]
 
     def __init__(self):
-        self.lights = neopixel.NeoPixel(board.D12, self.num_pixels, auto_write=False)
+        self.lights = neopixel.NeoPixel(board.D21, self.num_pixels, auto_write=False)
         self.segments = []  # type: list[Segment]
         self.corners = []  # type: list[PlayerSide]
         self.slots = [None, None]

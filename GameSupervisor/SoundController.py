@@ -1,10 +1,14 @@
 from SoundPlayer.ChessSounds import *
 from SoundPlayer.SoundManager import SoundInterface
+import pygame
 
 
 class SoundController:
 
     def __init__(self):
+        pygame.mixer.init()
+        pygame.init()
+
         self.interface = SoundInterface()
         self.intro_track = IntroMusic(self.interface)
         self.midroll_track = MidrollMusic(self.interface)
