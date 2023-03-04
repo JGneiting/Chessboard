@@ -1,4 +1,4 @@
-from BoardFiles.MotorManager import DualAxis
+from BoardFiles.MotorManager import DualAxis, SerialAxis
 from BoardFiles.MagnetManager import Magnet
 from time import sleep
 
@@ -8,7 +8,9 @@ class Board:
 
     def __init__(self, magnet_pull, magnet_push):
         self.magnet = Magnet(magnet_pull, magnet_push)
-        self.axis = DualAxis()
+        # self.axis = DualAxis()
+        self.axis = SerialAxis()
+        self.axis.init_motors()
         self.location = [1, 1]
 
         self.sq_1 = (.88, .86)
@@ -23,8 +25,8 @@ class Board:
 
     def active_move(self, square, time):
         self.magnet.activate()
-        self.move_to_square(square, time, compensate=True)
-        self.move_to_square(square, .25)
+        self.move_to_square(square, time, compensate=True, active=True)
+        # self.move_to_square(square, .25)
         sleep(.5)
         self.magnet.deactivate()
         for i in range(2):
@@ -39,6 +41,7 @@ class Board:
     def move_piece(self, source, destination, time):
         self.move_to_square(source, time)
         self.active_move(destination, time)
+        self.axis.write_queue()
 
     def move_between(self, source, dest, time):
         """
@@ -72,10 +75,11 @@ class Board:
         self.axis.move_axes(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
         self.magnet.set_duty_cycle(100)
-        self.move_to_square(dest, time/4, True)
+        self.move_to_square(dest, time/4, active=True)
+        self.axis.write_queue()
         self.magnet.deactivate()
 
-    def move_to_square(self, square, time, compensate=False):
+    def move_to_square(self, square, time, compensate=False, active=False):
         """
         Moves carriage to named square
         :param square: String based on chess naming conventions
@@ -102,7 +106,10 @@ class Board:
             x_target += self.overshoot * x_coeff
             y_target += self.overshoot * y_coeff
 
-        self.axis.synchronized_move(x_target, y_target, time)
+        if active:
+            self.axis.synchronized_move(x_target, y_target, time)
+        else:
+            self.axis.move_axes(x_target, y_target)
         self.location = [x_target, y_target]
 
     def convert_square_to_absolute(self, square):
@@ -140,4 +147,4 @@ class Board:
 
     def close(self):
         self.axis.kill()
-        self.axis.wait_for_threads()
+        # self.axis.wait_for_threads()

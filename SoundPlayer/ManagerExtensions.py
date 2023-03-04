@@ -67,7 +67,9 @@ class BackgroundChannel(SoundChannel):
         self.active = False
 
     def play_next(self):
-        pass
+        print("MALFUNCTION")
 
     def subscribe(self):
+        print("Subscribing")
         self.current_message.add_argument("Subscribe", self.play_next)
+        self.play_sound()

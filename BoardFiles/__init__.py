@@ -33,6 +33,7 @@ GPIO.output(magnet_push, 0)
 # GPIO.output(v5_pin, 1)
 
 if __name__ == "__main__":
-    cleanup()
+    # cleanup()
+    set_12v(True)
 
 
