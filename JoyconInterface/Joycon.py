@@ -122,7 +122,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
 
     def draw_cursor(self):
         if self.lights:
-            print(f"Drawing Cursor: {self.cursor}")
+            # print(f"Drawing Cursor: {self.cursor}")
             if self.state_function == self.piece_selection:
                 self.lights.select_square(self.cursor, 0)
             else:
@@ -228,7 +228,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         self.stick_home = self.get_home()
 
     def joycon_button_event(self, button, state):
-        print(f"{button}: {state}")
+        # print(f"{button}: {state}")
         if self.board is not None:
             if self.query_my_turn():
                 if (button == "zl" or button == "zr") and state:
@@ -237,7 +237,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
                     self.state_function(button, state)
 
     def stick_event(self):
-        print("Event")
+        # print("Event")
         x, y = self.get_stick()
         if (self.inverted and self.side == "RIGHT") or (not self.inverted and self.side == "LEFT"):
             x *= -1
