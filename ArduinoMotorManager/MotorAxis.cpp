@@ -1,40 +1,45 @@
 #include "Arduino.h"
 #include "MotorAxis.h"
-#include <ezButton.h>
+// #include <ezButton.h>
 
-MotorAxis::MotorAxis(int enable, int direction, int step, int bumperLeft, int bumperRight) : 
-enablePin(enable), directionPin(direction), stepPin(step), bumpLeftPin(bumperLeft), bumpRightPin(bumperRight), leftBumper(bumpLeftPin), rightBumper(bumpRightPin)
+MotorAxis::MotorAxis(int direction, int step, int enable, int bumperLeft, int bumperRight) : 
+enablePin(enable), directionPin(direction), stepPin(step), bumpLeftPin(bumperLeft), bumpRightPin(bumperRight)
 {
-  pinMode(enablePin, OUTPUT);
-  pinMode(directionPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
-  // pinMode(bumpLeftPin, INPUT_PULLUP);
-  // pinMode(bumpRightPin, INPUT_PULLUP);
 
-  // Start the button loops
-  leftBumper.loop();
-  rightBumper.loop();
-
-  minDelay = 2;
+  minDelay = 25;
   targetDelay = minDelay;
   totalSteps = 0;
   currentSteps = 0;
-  deltaSteps = 0;
-  // debounce = 50;
-  lastStep = millis();
+  targetSteps = 0;
+  lastStep = micros();
   state = IDLE;
   axisDirection = LEFT;
   stepState = false;
 
   // leftButtonState = digitalRead(bumpLeftPin);
   // rightButtonState = digitalRead(bumpRightPin);
+}
 
-  homeAxis();
+void MotorAxis::setup()
+{
+  pinMode(enablePin, OUTPUT);
+  pinMode(directionPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+  pinMode(bumpLeftPin, INPUT_PULLUP);
+  pinMode(bumpRightPin, INPUT_PULLUP);
+
+  digitalWrite(enablePin, 0);  
+
+  // Start the button loops
+  // leftBumper.loop();
+  // rightBumper.loop();
+
+  // homeAxis();
 }
 
 bool MotorAxis::getBusy()
 {
-  return state == IDLE;
+  return state != IDLE;
 }
 
 void MotorAxis::setDirection(stepDirection direction)
@@ -54,18 +59,20 @@ void MotorAxis::setDirection(stepDirection direction)
 bool MotorAxis::step()
 {
   // Check to see if the proper time delta has passed
-  if (millis() - lastStep >= targetDelay)
+  if (micros() - lastStep >= targetDelay)
   {
     // We need to pulse the step pin, then change our internal step counter in the correct direction
-    int delta = 1;
     if (axisDirection == LEFT)
     {
-      delta = -1;
+      currentSteps -= 1;
     }
-    currentSteps = currentSteps + delta;
+    else
+    {
+      currentSteps += 1;
+    }
     stepState = !stepState;
     digitalWrite(stepPin, stepState);
-    lastStep = millis();
+    lastStep = micros();
     return true;
   }
   return false;
@@ -78,12 +85,13 @@ void MotorAxis::homeAxis()
     // We need to find the left bumper
     setDirection(LEFT);
     state = HOMING;
-    targetDelay = 10;
+    targetDelay = 200;
   }
   else if (axisDirection == LEFT)
   {
+    step();
       // Check to see if the button has been pressed
-      if (leftBumper.isPressed())
+      if (digitalRead(bumpLeftPin) == 0)
       {
         currentSteps = 0;
         setDirection(RIGHT);
@@ -91,31 +99,35 @@ void MotorAxis::homeAxis()
   }
   else if (axisDirection == RIGHT)
   {
+    step();
     // Check to see if we have hit the right bumper
-    if (rightBumper.isPressed())
+    if (digitalRead(bumpRightPin) == 0)
     {
       totalSteps = currentSteps;
       state = IDLE;
     }
   }
-  else
-  {
-    step();
-  }
 }
 
-void MotorAxis::moveRelative(float percent, float delay=0)
+void MotorAxis::moveRelative(float percent, unsigned long delay=0)
 {
   // Make sure we are in an idle state
   if (state == IDLE)
   {
+    if (percent < 0 || percent > 100)
+    {
+      return;
+    }
+    
     targetDelay = max(delay, minDelay);
+    percent /= 100;
 
     // Calculate what step value we need to arrive to
-    int target = round(1.0 * totalSteps * percent);
+    long target = round(1.0 * totalSteps * percent);
+    targetSteps = target;
 
     // Determine the step delta from where we currently are and properly set the direction pin
-    int delta = target - currentSteps;
+    long delta = target - currentSteps;
     if (delta < 0)
     {
       delta = abs(delta);
@@ -129,20 +141,16 @@ void MotorAxis::moveRelative(float percent, float delay=0)
     {
       return;
     }
-
-    deltaSteps = delta;
+ 
     state = STEPPING;
   }
 }
 
 void MotorAxis::move()
 {
-  if (deltaSteps > 0)
+  if (targetSteps != currentSteps)
   {
-    if (step());
-    {
-      --deltaSteps;
-    }
+    step();
   }
   else
   {
