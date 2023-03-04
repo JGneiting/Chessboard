@@ -30,12 +30,16 @@ class ChessGame:
         self.run_game()
 
     def run_game(self):
-        run = False
+        run = True
         while run:
             try:
                 source, dest = self.backend.get_move()
-                print(f"{str(self.backend.get_square(dest))} ============================")
-                if str(self.backend.get_square(dest)) == "Knight":
+                time.sleep(.1)
+                piece = str(self.backend.get_square(dest))
+                if piece is "None":
+                    piece = "Knight"
+                print(f"{piece} ============================")
+                if piece == "Knight":
                     print("Knight detected")
                     self.board.move_between(source, dest, 1)
                 else:
