@@ -105,6 +105,7 @@ class ChessLogic(InternalBoard):
                 capture = self.get_square(dest)
                 if str(capture) == "GhostPawn":
                     capture = capture.get_linked_pawn()
+                    self.set_square(capture.get_location(), None)
                 for ghost in self.ghosts:
                     self.set_square(ghost.get_location(), None)
                     del ghost
@@ -131,7 +132,6 @@ class ChessLogic(InternalBoard):
         return success
 
     def capture(self, piece, square):
-        # TODO: This is where capture commands should be sent to the board
         self.captured.append(piece)
 
     def run_check_cycle(self):
