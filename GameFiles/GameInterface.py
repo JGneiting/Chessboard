@@ -43,11 +43,16 @@ class GameInterface(ChessLogic):
     assigned = 0
     move = None
 
-    def __init__(self, error_queue=None):
+    def __init__(self, error_queue=None, capture_callback=None):
         super().__init__()
 
         self.players = []
         self.error_report = error_queue
+        self.capture_call = capture_callback
+
+    def capture(self, piece, square):
+        self.capture_call(piece)
+        super().capture(piece, square)
 
     def cleanup(self):
         for player in self.players:
@@ -70,8 +75,8 @@ class GameInterface(ChessLogic):
 
     def move_piece(self, source, dest):
         try:
-            self.move = (source, dest)
             super().move_piece(source, dest)
+            self.move = (source, dest)
             return
         except Checkmate as e:
             if self.error_report:

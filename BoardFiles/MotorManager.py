@@ -230,10 +230,12 @@ class SerialAxis:
         sleep(2)
 
         self.travel_speed = 25
-        self.move_speed = 50
+        self.move_speed = 25
 
         self.last_position = (100, 100)
         self.cmd_queue = Queue()
+
+        self.available = True
 
     def init_motors(self):
         self.write("HOME\n")
@@ -255,8 +257,12 @@ class SerialAxis:
         self.write(msg)
 
     def write(self, command):
+        while not self.available:
+            sleep(.5)
+        self.available = False
         self.arduino.write(command.encode('utf-8'))
         self.wait_for_status()
+        self.available = True
 
     def move_axes(self, pos_x, pos_y):
         # We are going to assume that this is NOT an active move, so we are going to go as fast as we can
@@ -274,7 +280,10 @@ class SerialAxis:
         dx = abs(pos_x - self.last_position[0])
         dy = abs(pos_y - self.last_position[1])
 
-        theta = np.arctan(dy/dx)
+        try:
+            theta = np.arctan(dy/dx)
+        except ZeroDivisionError:
+            theta = np.pi / 2
         delay_x = round(self.move_speed * np.cos(theta))
         delay_y = round(self.move_speed * np.sin(theta))
 

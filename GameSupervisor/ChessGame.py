@@ -13,7 +13,7 @@ class ChessGame:
 
     def __init__(self):
         self.errors = Queue()
-        self.backend = GameInterface(self.errors)
+        self.backend = GameInterface(self.errors, self.capture)
         self.lights = LightsInterface()
         self.audio = SoundController()
         self.lights.run_pregame()
@@ -28,6 +28,9 @@ class ChessGame:
         self.lights.set_team("White")
         self.audio.run_midroll()
         self.run_game()
+
+    def capture(self, piece):
+        self.board.capture(piece)
 
     def run_game(self):
         run = True

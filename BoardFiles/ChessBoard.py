@@ -1,5 +1,6 @@
 from BoardFiles.MotorManager import DualAxis, SerialAxis
 from BoardFiles.MagnetManager import Magnet
+from BoardFiles.CaptureManagement import SlotManager
 from time import sleep
 
 
@@ -13,20 +14,26 @@ class Board:
         self.axis.init_motors()
         self.location = [1, 1]
 
-        self.sq_1 = (.88, .86)
-        self.sq_2 = (.134, .855)
-        self.sq_3 = (.133, .13)
-        self.sq_4 = (.89, .147)
+        self.sq_1 = (.877, .86)
+        self.sq_2 = (.128, .858)
+        self.sq_3 = (.14, .14)
+        self.sq_4 = (.89, .143)
         self.overshoot = .0025
         self.rail_compensate = .0015
 
+        self.capture_manager = SlotManager(self, self.magnet)
+
     def cleanup(self):
         self.close()
+
+    def capture(self, piece):
+        self.capture_manager.capture(piece)
 
     def active_move(self, square, time):
         self.magnet.activate()
         self.move_to_square(square, time, compensate=True, active=True)
         # self.move_to_square(square, .25)
+        self.axis.write_queue()
         sleep(.5)
         self.magnet.deactivate()
         for i in range(2):
@@ -40,8 +47,8 @@ class Board:
 
     def move_piece(self, source, destination, time):
         self.move_to_square(source, time)
-        self.active_move(destination, time)
         self.axis.write_queue()
+        self.active_move(destination, time)
 
     def move_between(self, source, dest, time):
         """
@@ -70,11 +77,12 @@ class Board:
             intermediates.append((delta_x1, delta_y))
             intermediates.append((delta_x2, delta_y))
         self.move_to_square(source, time/4)
-        self.magnet.pulse(20)
+        self.axis.write_queue()
+        self.magnet.pulse(60)
         self.axis.move_axes(intermediates[0][0], intermediates[0][1])
         self.axis.move_axes(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
-        self.magnet.set_duty_cycle(100)
+        # self.magnet.set_duty_cycle(100)
         self.move_to_square(dest, time/4, active=True)
         self.axis.write_queue()
         self.magnet.deactivate()

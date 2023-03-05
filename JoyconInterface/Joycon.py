@@ -170,7 +170,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         if len(distances) != 0:
             fitness = []
             for distance, angle in zip(distances, angle_deltas):
-                score = (angle ** 3) + distance
+                score = (angle / 4) + distance
                 fitness.append(score)
 
             # threshold = max(distances)**2
