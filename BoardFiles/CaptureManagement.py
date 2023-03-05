@@ -171,6 +171,6 @@ class CaptureSlot:
         # ---- STAGE 7 ----
         # We have successfully queued the path for the captured piece. Execute the masterpiece
         self.magnet.pulse(self.magnet_strength)
-        time.sleep(0.4)
+        # time.sleep(0.4)
         self.board.axis.write_queue()
         self.magnet.deactivate()
