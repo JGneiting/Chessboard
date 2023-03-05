@@ -230,7 +230,7 @@ class SerialAxis:
         sleep(2)
 
         self.travel_speed = 25
-        self.move_speed = 25
+        self.move_speed = 50
 
         self.last_position = (100, 100)
         self.cmd_queue = Queue()

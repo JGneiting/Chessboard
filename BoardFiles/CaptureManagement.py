@@ -52,7 +52,7 @@ class SlotManager:
 
 
 class CaptureSlot:
-    magnet_strength = 60
+    magnet_strength = 100
 
     def __init__(self, back, front, board, magnet):
         """
