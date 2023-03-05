@@ -1,7 +1,7 @@
 #ifndef MotorAxis_h
 #define MotorAxis_h
 #include "Arduino.h"
-#include <ezButton.h>
+// #include <ezButton.h>
 
 enum stepDirection {LEFT, RIGHT};
 enum axisState {HOMING, STEPPING, IDLE};
@@ -9,21 +9,21 @@ enum axisState {HOMING, STEPPING, IDLE};
 class MotorAxis
 {
 public:
-  MotorAxis(int enable, int direction, int step, int bumperLeft, int bumperRight);
+  MotorAxis(int direction, int step, int enable, int bumperLeft, int bumperRight);
   ~MotorAxis() = default;
 
   void homeAxis();
-  void moveRelative(float percent, float delay=0);
+  void setup();
+  void moveRelative(float percent, unsigned long delay=0);
   bool getBusy();
+  void update();
 private:
-  int totalSteps;
-  int currentSteps;
-  int deltaSteps;
-  long lastStep;
-  // int debounce;
-  int minDelay;
-  int targetDelay;
-  float deltaTime;
+  long totalSteps;
+  long currentSteps;
+  long targetSteps;
+  unsigned long lastStep;
+  unsigned long minDelay;
+  unsigned long targetDelay;
 
   int enablePin;
   int directionPin;
@@ -33,8 +33,8 @@ private:
 
   // int leftBumperState;
   // int rightBumperState;
-  ezButton leftBumper;
-  ezButton rightBumper;
+  // ezButton leftBumper;
+  // ezButton rightBumper;
 
   axisState state;
   stepDirection axisDirection;
@@ -43,7 +43,6 @@ private:
   void move(); 
   void setDirection(stepDirection direction);
   bool step();
-  void update();
 };
 
 #endif
