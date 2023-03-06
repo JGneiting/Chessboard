@@ -66,7 +66,7 @@ class InternalBoard:
 
     def initialize_board(self):
         captured = []
-        back = ["Rook", "Knight", "Bishop", "King", "Queen", "Bishop", "Knight", "Rook"]
+        back = ["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"]
         for color in ["White", "Black"]:
             row = 0 if color == "White" else 7
             for i in range(8):
@@ -126,6 +126,8 @@ class ChessLogic(InternalBoard):
                 self.in_check = None
                 success = True
                 self.run_check_cycle()
+                if str(occupant) == "Pawn" and type(self) != Simulator:
+                    occupant.check_upgrade()
                 self.next_player()
             else:
                 raise InvalidMove(dest, move_set)

@@ -6,7 +6,7 @@ import pygame
 class SoundController:
 
     def __init__(self):
-        pygame.mixer.init()
+        pygame.mixer.init(buffer=2048)
         pygame.init()
 
         self.interface = SoundInterface()

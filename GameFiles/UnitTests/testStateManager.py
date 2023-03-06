@@ -5,6 +5,22 @@ from GameFiles.ChessErrors import *
 
 
 class CheckLogic(unittest.TestCase):
+    def test_pawn_blocking(self):
+        board = TestBoard()
+        pawn = board.create_piece("B2", "Pawn")
+        board.create_piece("C1", "Bishop")
+        board.create_piece("D1", "King")
+        board.create_piece("D2", "Pawn")
+        board.create_piece("E2", "Pawn")
+        board.create_piece("E1", "Queen")
+        board.create_piece("E8", "Queen", "Black")
+
+        board.turn = "Black"
+        board.move_piece("E8", "A4")
+
+        moves = pawn.get_possible_moves()
+        self.assertNotIn("B4", moves)
+
     def test_moves_square(self):
         board = TestBoard()
         board.create_piece("A2", "Pawn")
@@ -123,6 +139,12 @@ class SimulatorIndependance(unittest.TestCase):
         test = Simulator(source)
         self.assertNotEqual(source, test)
         self.assertEqual(str(source), str(test))
+
+    def test_pawn_upgrading_ignored(self):
+        board = TestBoard()
+        pawn = board.create_piece("A7", "Pawn")
+
+        pawn.get_possible_moves()
 
     def test_independance(self):
         source = TestBoard()

@@ -24,7 +24,7 @@ class SlotManager:
         sorted_slots = sorted(self.slots, key=fitness)  # type: list[CaptureSlot]
 
         for slot in sorted_slots:
-            if slot.available():
+            if slot.available(piece):
                 slot.store_piece(piece)
                 break
 
@@ -32,34 +32,38 @@ class SlotManager:
         # We are creating the vertical storage slots
         delta = self.slot_span[1] - 0.5
         delta /= 4
-        for x in self.extremes:
+        # X is technically the vertical axes. They store any piece except for pawns
+        for x, team in zip(self.extremes, ["Black", "White"]):
             for i in range(2):
                 back = (x, self.slot_span[i])
                 if i == 0:
                     front = (x, 0.5 - delta)
                 else:
                     front = (x, 0.5 + delta)
-                self.slots.append(CaptureSlot(back, front, self.board, self.magnet))
+                self.slots.append(CaptureSlot(back, front, self.board, self.magnet, team=team, piece_type="Pawn"))
 
+        # Y is on the player side and store the other team's pieces and only pawns
         for y in self.extremes:
-            for i in range(2):
+            for i, team in zip(range(2), ["Black", "White"]):
                 back = (self.slot_span[i], y)
                 if i == 0:
                     front = (0.5 - delta, y)
                 else:
                     front = (0.5 + delta, y)
-                self.slots.append(CaptureSlot(back, front, self.board, self.magnet))
+                self.slots.append(CaptureSlot(back, front, self.board, self.magnet, team=team, piece_type="-Pawn"))
 
 
 class CaptureSlot:
     magnet_strength = 100
 
-    def __init__(self, back, front, board, magnet):
+    def __init__(self, back, front, board, magnet, team=None, piece_type="ANY"):
         """
         Creates a capture slot to store captured pieces in
         :param back: Coordinate of first (deepest) slot
         :param front: Coordinate of last (shallowest) slot
         :param board: Reference to the Board within the Motor Management
+        :param team: Team of pieces allowed to be stored in the slot
+        :param piece_type: The type of piece allowed to be stored in the slot (Any, Pawn, -Pawn)
         """
         self.first = back
         self.last = front
@@ -67,9 +71,26 @@ class CaptureSlot:
         self.board = board
         self.magnet = magnet
         self.stored = []
+        self.team = team
+        self.piece_type = piece_type
 
-    def available(self):
-        return len(self.stored) < 4
+    def available(self, piece):
+        available = True
+        # Check if the team can be in the slot
+        if self.team is not None and piece.get_team() != self.team:
+            available = False
+        # Check if the piece type can be in the slot
+        piece_name = str(piece)
+        if self.piece_type != "Any":
+            if self.piece_type == "-Pawn":
+                if piece_name == "Pawn":
+                    available = False
+            else:
+                if piece_name != "Pawn":
+                    available = False
+        if len(self.stored) >= 4:
+            available = False
+        return available
 
     def store_piece(self, piece):
         """

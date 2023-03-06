@@ -140,10 +140,10 @@ class PawnTests(unittest.TestCase):
 
     def test_upgrade_raised(self):
         board = TestBoard(True)
-        pawn = board.create_piece("A8", "Pawn")  # type: Piece
+        pawn = board.create_piece("A7", "Pawn")  # type: Piece
 
         with self.assertRaises(PawnUpgrade):
-            pawn.get_possible_moves()
+            board.move_piece("A7", "A8")
 
     def test_multiple_teams(self):
         board = TestBoard()
@@ -203,6 +203,16 @@ class BishopTest(unittest.TestCase):
 
         moves = bishop.get_possible_moves()
         self.assertEqual(["A3", "A1", "C1"], moves)
+
+    def test_ignoring_ghostpawns(self):
+        board = TestBoard()
+        bishop = board.create_piece("A4", "Bishop", "Black")
+        pawn = board.create_piece("B2", "Pawn")
+
+        board.move_piece("B2", "B4")
+
+        moves = bishop.get_possible_moves()
+        self.assertIn("C2", moves)
 
 
 class TestKnight(unittest.TestCase):

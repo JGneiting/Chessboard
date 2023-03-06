@@ -245,7 +245,7 @@ class SerialAxis:
             pass
         response = self.arduino.readline().decode('utf-8').rstrip()
         print(f"Response from Arduino: {response}")
-        sleep(.05)
+        sleep(.01)
 
     def write_queue(self):
         msg = ""
@@ -258,7 +258,7 @@ class SerialAxis:
 
     def write(self, command):
         while not self.available:
-            sleep(.5)
+            sleep(.1)
         self.available = False
         self.arduino.write(command.encode('utf-8'))
         self.wait_for_status()
