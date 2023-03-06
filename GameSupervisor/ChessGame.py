@@ -59,7 +59,7 @@ class ChessGame:
             except Checkmate as e:
                 print(e)
                 self.audio.run_outro()
-                time.sleep(120)
+                time.sleep(180)
                 run = False
 
         self.backend.cleanup()

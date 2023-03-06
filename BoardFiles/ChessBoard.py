@@ -1,3 +1,5 @@
+import math
+
 from BoardFiles.MotorManager import DualAxis, SerialAxis
 from BoardFiles.MagnetManager import Magnet
 from BoardFiles.CaptureManagement import SlotManager
@@ -18,7 +20,7 @@ class Board:
         self.sq_2 = (.128, .858)
         self.sq_3 = (.14, .14)
         self.sq_4 = (.89, .143)
-        self.overshoot = .0025
+        self.overshoot = .0065
         self.rail_compensate = .0015
 
         self.capture_manager = SlotManager(self, self.magnet)
@@ -83,7 +85,7 @@ class Board:
         self.axis.move_axes(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
         # self.magnet.set_duty_cycle(100)
-        self.move_to_square(dest, time/4, active=True)
+        self.move_to_square(dest, time/4, compensate=True, active=True)
         self.axis.write_queue()
         self.magnet.deactivate()
 
@@ -99,20 +101,14 @@ class Board:
         x_target, y_target = self.convert_square_to_absolute(square)
 
         if compensate:
-            x_dir = x_target - self.location[0]
-            y_dir = y_target - self.location[1]
-            x_coeff = 0
-            y_coeff = 0
-            if x_dir < 0:
-                x_coeff = -1
-            if x_dir > 0:
-                x_coeff = 1
-            if y_dir < 0:
-                y_coeff = -1
-            if y_dir > 0:
-                y_coeff = 1
-            x_target += self.overshoot * x_coeff
-            y_target += self.overshoot * y_coeff
+            dx = x_target - self.location[0]
+            dy = y_target - self.location[1]
+            len_ = math.sqrt(dx**2 + dy**2)
+            unit_vector = (dx/len_, dy/len_)
+            x_target += unit_vector[0] * self.overshoot
+            y_target += unit_vector[1] * self.overshoot
+            print(f"OVERSHOOTING: {x_target}, {y_target}")
+            print(f"Direction of movement: ({unit_vector})")
 
         if active:
             self.axis.synchronized_move(x_target, y_target, time)

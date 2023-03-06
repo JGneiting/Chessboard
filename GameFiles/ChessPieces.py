@@ -102,7 +102,7 @@ class RangedPiece(Piece):
                         raise OutOfRange
                     if self.board.is_movable(self, f'{x_new}{y_new}'):
                         move_list.append(f'{x_new}{y_new}')
-                    if not self.board.square_empty(f'{x_new}{y_new}'):
+                    if (not self.board.square_empty(f'{x_new}{y_new}')) and str(self.board.get_square(f'{x_new}{y_new}')) != "GhostPawn":
                         break
                 except OutOfRange:
                     pass
@@ -116,12 +116,14 @@ class Pawn(Piece):
         super().__init__(*args)
         self.moved = False
 
+    def check_upgrade(self):
+        if int(self.location[1]) == 1 or int(self.location[1]) == 8:
+            raise PawnUpgrade
+
     def get_possible_moves(self):
         if self.board.get_turn() != self.team:
             return []
         squares = []
-        if int(self.location[1]) == 1 or int(self.location[1]) == 8:
-            raise PawnUpgrade
         x, y = self.character_swap(self.location[0]), int(self.location[1])
         y_new = y + self.movement[0][1]
         try:
