@@ -45,6 +45,10 @@ class InternalBoard:
             return self.get_square(square).get_possible_moves()
         return []
 
+    def reset_board(self):
+        self.board = [[None] * 8 for i in range(8)]
+        self.initialize_board()
+
     def get_opposing_team(self, team):
         if team == "White":
             return "Black"
@@ -66,15 +70,15 @@ class InternalBoard:
 
     def initialize_board(self):
         captured = []
-        back = ["Rook", "Knight", "Bishop", "King", "Queen", "Bishop", "Knight", "Rook"]
+        back = ["Rook", "Knight", "Bishop", "Queen", "King", "Bishop", "Knight", "Rook"]
         for color in ["White", "Black"]:
             row = 0 if color == "White" else 7
             for i in range(8):
-                self.board[row][i] = eval(f'{back[i]}((0,0), self.numeric_to_named(row, i), color, self)')
+                self.board[row][i] = eval(f'{back[i]}(self.numeric_to_named(row, i), self.numeric_to_named(row, i), color, self)')
         for color in ["White", "Black"]:
             row = 1 if color == "White" else 6
             for i in range(8):
-                self.board[row][i] = eval(f'Pawn((0,0), self.numeric_to_named(row, i), color, self)')
+                self.board[row][i] = eval(f'Pawn(self.numeric_to_named(row, i), self.numeric_to_named(row, i), color, self)')
 
 
 class ChessLogic(InternalBoard):
@@ -126,6 +130,8 @@ class ChessLogic(InternalBoard):
                 self.in_check = None
                 success = True
                 self.run_check_cycle()
+                if str(occupant) == "Pawn" and type(self) != Simulator:
+                    occupant.check_upgrade()
                 self.next_player()
             else:
                 raise InvalidMove(dest, move_set)
@@ -179,7 +185,7 @@ class ChessLogic(InternalBoard):
         pieces = []
         for i in range(8):
             for j in range(8):
-                if self.board[i][j] is not None and self.board[i][j].get_team() == team:
+                if self.board[i][j] is not None and (self.board[i][j].get_team() == team or team == "ALL"):
                     pieces.append(self.board[i][j])
         return pieces
 

@@ -229,8 +229,8 @@ class SerialAxis:
         self.arduino.setDTR(True)
         sleep(2)
 
-        self.travel_speed = 25
-        self.move_speed = 50
+        self.travel_speed = 20
+        self.move_speed = 40
 
         self.last_position = (100, 100)
         self.cmd_queue = Queue()
@@ -245,7 +245,7 @@ class SerialAxis:
             pass
         response = self.arduino.readline().decode('utf-8').rstrip()
         print(f"Response from Arduino: {response}")
-        sleep(.05)
+        sleep(.01)
 
     def write_queue(self):
         msg = ""
@@ -258,7 +258,7 @@ class SerialAxis:
 
     def write(self, command):
         while not self.available:
-            sleep(.5)
+            sleep(.1)
         self.available = False
         self.arduino.write(command.encode('utf-8'))
         self.wait_for_status()
@@ -266,14 +266,14 @@ class SerialAxis:
 
     def move_axes(self, pos_x, pos_y):
         # We are going to assume that this is NOT an active move, so we are going to go as fast as we can
-        speed = 25
+        speed = self.travel_speed
         pos_x *= 100
         pos_y *= 100
         command = f"MV {pos_y} {pos_x} {speed} {speed}"
         self.last_position = (pos_x, pos_y)
         self.cmd_queue.put(command)
 
-    def synchronized_move(self, pos_x, pos_y, time):
+    def synchronized_move(self, pos_x, pos_y, time=1):
         # I don't care about time, just that the motors travel in a straight line to their destination
         pos_x *= 100
         pos_y *= 100

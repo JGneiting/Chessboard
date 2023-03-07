@@ -32,13 +32,15 @@ class SoundManager(threading.Thread):
                     break
                 if "Subscribe" in command.args.keys():
                     self.callback = command.args["Subscribe"]
+                elif "Stop" in command.args.keys():
+                    self.channels[command.args["Stop"]].fadeout(command.args["fade_ms"])
                 else:
                     self.play_on_channel(**command.args)
             if not pygame.mixer.get_busy() and self.currently_playing:
                 if self.callback:
                     self.callback()
                 self.currently_playing = False
-            pygame.time.delay(900)
+            pygame.time.delay(100)
 
     def set_channel_volume(self, channel=0, volume=1):
         self.channels[channel].set_volume(volume)
@@ -48,9 +50,9 @@ class SoundManager(threading.Thread):
         selected_sound = Sound(sound)
         if self.channels[channel].get_busy():
             self.channels[channel].fadeout(500)
-            pygame.time.delay(500)
-        # self.channels[channel].play(selected_sound, loops, max_time, fade_ms)
-        selected_sound.play()
+            # pygame.time.delay(500)
+        self.channels[channel].play(selected_sound, loops, max_time, fade_ms)
+        # selected_sound.play()
         self.set_channel_volume(channel, volume)
         self.currently_playing = True
 

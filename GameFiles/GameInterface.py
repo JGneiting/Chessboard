@@ -81,6 +81,8 @@ class GameInterface(ChessLogic):
         except Checkmate as e:
             if self.error_report:
                 self.error_report.put(e)
+            self.turn = None
+            self.move = (source, dest)
         except TurnError as e:
             if self.error_report:
                 self.error_report.put(e)

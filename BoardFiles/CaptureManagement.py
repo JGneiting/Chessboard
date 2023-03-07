@@ -24,42 +24,58 @@ class SlotManager:
         sorted_slots = sorted(self.slots, key=fitness)  # type: list[CaptureSlot]
 
         for slot in sorted_slots:
-            if slot.available():
+            if slot.available(piece):
                 slot.store_piece(piece)
                 break
+
+    def reset_board(self):
+        # We want to pull pieces from the -Pawn slots first, then move the pawns onto the board
+        def fitness(capture_slot):
+            piece_type = capture_slot.piece_type
+            score = 1 if piece_type == "-Pawn" else 2
+            return score
+        removal_order = sorted(self.slots, key=fitness)  # type: list[CaptureSlot]
+
+        # Now call the remove function on each slot in the correct order
+        for slot in removal_order:
+            slot.remove()
 
     def generate_slots(self):
         # We are creating the vertical storage slots
         delta = self.slot_span[1] - 0.5
         delta /= 4
-        for x in self.extremes:
+        # X is technically the vertical axes. They store any piece except for pawns
+        for x, team in zip(self.extremes, ["Black", "White"]):
             for i in range(2):
                 back = (x, self.slot_span[i])
                 if i == 0:
                     front = (x, 0.5 - delta)
                 else:
                     front = (x, 0.5 + delta)
-                self.slots.append(CaptureSlot(back, front, self.board, self.magnet))
+                self.slots.append(CaptureSlot(back, front, self.board, self.magnet, team=team, piece_type="Pawn"))
 
+        # Y is on the player side and store the other team's pieces and only pawns
         for y in self.extremes:
-            for i in range(2):
+            for i, team in zip(range(2), ["Black", "White"]):
                 back = (self.slot_span[i], y)
                 if i == 0:
                     front = (0.5 - delta, y)
                 else:
                     front = (0.5 + delta, y)
-                self.slots.append(CaptureSlot(back, front, self.board, self.magnet))
+                self.slots.append(CaptureSlot(back, front, self.board, self.magnet, team=team, piece_type="-Pawn"))
 
 
 class CaptureSlot:
     magnet_strength = 100
 
-    def __init__(self, back, front, board, magnet):
+    def __init__(self, back, front, board, magnet, team=None, piece_type="ANY"):
         """
         Creates a capture slot to store captured pieces in
         :param back: Coordinate of first (deepest) slot
         :param front: Coordinate of last (shallowest) slot
         :param board: Reference to the Board within the Motor Management
+        :param team: Team of pieces allowed to be stored in the slot
+        :param piece_type: The type of piece allowed to be stored in the slot (Any, Pawn, -Pawn)
         """
         self.first = back
         self.last = front
@@ -67,9 +83,105 @@ class CaptureSlot:
         self.board = board
         self.magnet = magnet
         self.stored = []
+        self.team = team
+        self.piece_type = piece_type
 
-    def available(self):
-        return len(self.stored) < 4
+        # ---- PREP ----
+        # We need to know where our loading zone is
+        load_x = self.first[0] + (self.delta[0] / 4)
+        load_y = self.first[1] + (self.delta[1] / 4)
+        self.central_axis = "X"
+
+        # One of these values will not change. It needs to move half of the other's delta toward .5 .5
+        offset = 0.05
+        if load_x == self.first[0]:
+            self.central_axis = "X"
+            if load_x > 0.5:
+                load_x -= abs(offset)
+            else:
+                load_x += abs(offset)
+            load_y = 0.5
+        else:
+            self.central_axis = "Y"
+            if load_y > 0.5:
+                load_y -= abs(offset)
+            else:
+                load_y += abs(offset)
+            load_x = 0.5
+
+        self.loading_zone = (load_x, load_y)
+
+    def available(self, piece):
+        available = True
+        # Check if the team can be in the slot
+        if self.team is not None and piece.get_team() != self.team:
+            available = False
+        # Check if the piece type can be in the slot
+        piece_name = str(piece)
+        if self.piece_type != "Any":
+            if self.piece_type == "-Pawn":
+                if piece_name == "Pawn":
+                    available = False
+            else:
+                if piece_name != "Pawn":
+                    available = False
+        if len(self.stored) >= 4:
+            available = False
+        return available
+
+    def remove(self):
+        while len(self.stored) > 0:
+            piece = self.stored.pop()
+
+            # ---- STAGE 1 ----
+            # Move inactive magnet to the piece
+            piece_loc = piece.abs_location
+            self.board.axis.move_axes(*piece_loc)
+            self.board.axis.write_queue()
+
+            # ---- STAGE 2 ----
+            # Move piece to the front loading slot
+            self.board.axis.synchronized_move(self.last[0], self.last[1], 1)
+
+            # ---- STAGE 3 ----
+            # Move piece to the loading zone
+            self.board.axis.synchronized_move(self.loading_zone[0], self.loading_zone[1], 1)
+
+            # ---- STAGE 4 ----
+            # This is where the algorithm will vary. If we store pawns, we do not care about letter positioning
+
+            if self.piece_type == "Pawn":
+                # ++++ PAWN STORAGE ++++
+                # We need to move pawn to the center of the board
+                self.board.axis.synchronized_move(0.5, 0.5, 1)
+                # Now we move it to its slot
+                self.board.axis.synchronized_move(*self.board.convert_square_to_absolute(piece.home))
+            else:
+                # ++++ NON PAWN STORAGE ++++
+                # We need to move the piece to its intermediate axis
+                home = piece.home
+                offset = 1
+                if home[0] >= "E":
+                    offset = -1
+                neighbor = self.select_in_direction(offset, 0, home)
+                home_coords = self.board.convert_square_to_absolute(home)
+                neighbor_coords = self.board.convert_square_to_absolute(neighbor)
+                intermediate = home_coords[1] + neighbor_coords[1]
+                intermediate /= 2
+                self.board.axis.synchronized_move(0.5, intermediate)
+
+                # Move the pawn to be level with its square
+                self.board.axis.synchronized_move(home_coords[0], intermediate)
+
+                # Move into position
+                self.board.move_to_square(home, 1, True, True)
+
+            # ---- STAGE 5 ----
+            # Congratulations! You have moved one piece out of the buffer and onto the board! Execute the masterpiece
+            self.magnet.pulse(self.magnet_strength)
+            self.board.axis.write_queue()
+            self.magnet.deactivate()
+
 
     def store_piece(self, piece):
         """
@@ -101,29 +213,9 @@ class CaptureSlot:
         :return:
         """
         # ---- PREP ----
-        # We need to know where our loading zone is
-        load_x = self.first[0] + (self.delta[0] / 4)
-        load_y = self.first[1] + (self.delta[1] / 4)
-        central_axis = "X"
-
-        # One of these values will not change. It needs to move half of the other's delta toward .5 .5
-        offset = 0.05
-        if load_x == self.first[0]:
-            central_axis = "X"
-            if load_x > 0.5:
-                load_x -= abs(offset)
-            else:
-                load_x += abs(offset)
-            load_y = 0.5
-        else:
-            central_axis = "Y"
-            if load_y > 0.5:
-                load_y -= abs(offset)
-            else:
-                load_y += abs(offset)
-            load_x = 0.5
-
-        loading_zone = (load_x, load_y)
+        # Separate the loading_zone into x and y components
+        load_x = self.loading_zone[0]
+        load_y = self.loading_zone[1]
 
         # ---- STAGE 1 ----
         # We need to move an inactive magnet under the piece
@@ -148,7 +240,7 @@ class CaptureSlot:
 
         # ---- STAGE 3 ----
         # We need to move the piece to the correct central axis
-        if central_axis == "X":
+        if self.central_axis == "X":
             # We need to keep offset 1 X value and replace the Y value
             offset_2 = (offset_1[0], load_y)
         else:
