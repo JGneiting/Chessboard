@@ -6,7 +6,7 @@ MotorAxis::MotorAxis(int direction, int step, int enable, int bumperLeft, int bu
 enablePin(enable), directionPin(direction), stepPin(step), bumpLeftPin(bumperLeft), bumpRightPin(bumperRight)
 {
 
-  minDelay = 25;
+  minDelay = 20;
   targetDelay = minDelay;
   totalSteps = 0;
   currentSteps = 0;
