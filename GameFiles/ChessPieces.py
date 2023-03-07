@@ -4,8 +4,9 @@ from GameFiles.ChessErrors import *
 class Piece:
     movement = [(0,1)]
 
-    def __init__(self, a_loc, loc, team, board):
-        self.abs_location = a_loc
+    def __init__(self, home, loc, team, board):
+        self.abs_location = None
+        self.home = loc
         self.location = loc
         self.team = team
         self.board = board
@@ -28,7 +29,7 @@ class Piece:
         self.dead = True
 
     def __deepcopy__(self, memodict={}):
-        return eval(f'{str(self)}(self.abs_location, self.location, self.team, None)')
+        return eval(f'{str(self)}(self.home, self.location, self.team, None)')
 
     def get_team(self):
         return self.team

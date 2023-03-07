@@ -25,6 +25,48 @@ class Board:
 
         self.capture_manager = SlotManager(self, self.magnet)
 
+    def move_home(self, piece):
+        # There is an intermediate path in the shape of an L between any two squares.
+        # Determine the corner square by taking a letter from one and the number from the other
+        home = piece.home
+        location = piece.get_location()
+        home_abs = self.convert_square_to_absolute(home)
+        location_abs = self.convert_square_to_absolute(location)
+        if home != location:
+            if not piece.board.square_empty():
+                self.move_home(piece.board.get_square(home))
+            corner = f"{home[0]}{location[1]}"
+            delta_y = 1
+            if home[0] > location[0]:
+                delta_y = -1
+            delta_x = 1
+            if home[1] > location[1]:
+                delta_x = -1
+
+            sq1 = self.convert_square_to_absolute("B3")
+            sq2 = self.convert_square_to_absolute("C4")
+            offset = (sq2[0]-(sq2[0] + sq1[0])/2, sq1[1]-(sq2[1] + sq1[1])/2)
+            first_intermediate = ((-1*offset[0]*delta_x)+location_abs[0], (offset[1]*delta_y)+location_abs[1])
+            last_intermediate = ((offset[0]*delta_x)+home_abs[0], (offset[1]*delta_y)+home_abs[1])
+            hybrid = (first_intermediate[0], last_intermediate[1])
+
+            # Move magnet to piece
+            self.move_to_square(location, 1)
+            self.axis.write_queue()
+
+            # Queue the move
+            self.axis.synchronized_move(*first_intermediate)
+            self.axis.synchronized_move(*hybrid)
+            self.axis.synchronized_move(*last_intermediate)
+            self.move_to_square(home, 1, True, True)
+            self.magnet.pulse(100)
+            self.axis.write_queue()
+            self.magnet.deactivate()
+            piece.set_location(home)
+
+    def return_captured(self):
+        self.capture_manager.reset_board()
+
     def cleanup(self):
         self.close()
 

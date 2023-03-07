@@ -12,7 +12,7 @@ import time
 
 class StickMonitor(threading.Thread):
     tolerance = 350
-    bouncetime = .5
+    bouncetime = .25
 
     def __init__(self, thread_id, name, counter, stick_type, callback, joycon, comm_queue):
         super().__init__()
