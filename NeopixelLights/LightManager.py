@@ -120,8 +120,8 @@ class BoardLights:
         self.segments.append(SegmentRight(38, True))
         self.segments.append(SegmentLower(38, True))
 
-        self.corners.append(WhiteSideLights(self.lights, (0, 0, 255), self.base_color))
-        self.corners.append(BlackSideLights(self.lights, (255, 0, 0), self.base_color))
+        self.corners.append(WhiteSideLights(self.lights, (255, 0, 0), self.base_color))
+        self.corners.append(BlackSideLights(self.lights, (0, 0, 255), self.base_color))
 
         self.lights.fill(self.base_color)
         self.flush()

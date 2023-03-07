@@ -6,9 +6,10 @@ from SoundPlayer.ManagerExtensions import SoundChannel, BackgroundChannel
 class StandardChessBackground(BackgroundChannel):
     song_lib = ""
     thread_id = 6
+    assigned_channel = 0
 
     def __init__(self, sound_interface):
-        super().__init__(sound_interface, 0)
+        super().__init__(sound_interface, self.assigned_channel)
         self.thread_id += 1
 
         self.song_list = os.listdir(self.song_lib)
@@ -23,16 +24,23 @@ class StandardChessBackground(BackgroundChannel):
         self.next_song += 1
         self.next_song %= len(self.song_list)
 
+    def stop(self):
+        self.set_fade(500)
+        self.stop_playback()
+
 
 class IntroMusic(StandardChessBackground):
+    assigned_channel = 0
     song_lib = "SoundPlayer/GameSounds/Intro"
 
 
 class MidrollMusic(StandardChessBackground):
+    assigned_channel = 1
     song_lib = "SoundPlayer/GameSounds/Midroll"
 
 
 class OutroMusic(StandardChessBackground):
+    assigned_channel = 2
     song_lib = "SoundPlayer/GameSounds/Outro"
 
 

@@ -1,3 +1,5 @@
+import math
+
 from BoardFiles.MotorManager import DualAxis, SerialAxis
 from BoardFiles.MagnetManager import Magnet
 from BoardFiles.CaptureManagement import SlotManager
@@ -18,10 +20,52 @@ class Board:
         self.sq_2 = (.128, .858)
         self.sq_3 = (.14, .14)
         self.sq_4 = (.89, .143)
-        self.overshoot = .0025
+        self.overshoot = .0065
         self.rail_compensate = .0015
 
         self.capture_manager = SlotManager(self, self.magnet)
+
+    def move_home(self, piece):
+        # There is an intermediate path in the shape of an L between any two squares.
+        # Determine the corner square by taking a letter from one and the number from the other
+        home = piece.home
+        location = piece.get_location()
+        home_abs = self.convert_square_to_absolute(home)
+        location_abs = self.convert_square_to_absolute(location)
+        if home != location:
+            if not piece.board.square_empty():
+                self.move_home(piece.board.get_square(home))
+            corner = f"{home[0]}{location[1]}"
+            delta_y = 1
+            if home[0] > location[0]:
+                delta_y = -1
+            delta_x = 1
+            if home[1] > location[1]:
+                delta_x = -1
+
+            sq1 = self.convert_square_to_absolute("B3")
+            sq2 = self.convert_square_to_absolute("C4")
+            offset = (sq2[0]-(sq2[0] + sq1[0])/2, sq1[1]-(sq2[1] + sq1[1])/2)
+            first_intermediate = ((-1*offset[0]*delta_x)+location_abs[0], (offset[1]*delta_y)+location_abs[1])
+            last_intermediate = ((offset[0]*delta_x)+home_abs[0], (offset[1]*delta_y)+home_abs[1])
+            hybrid = (first_intermediate[0], last_intermediate[1])
+
+            # Move magnet to piece
+            self.move_to_square(location, 1)
+            self.axis.write_queue()
+
+            # Queue the move
+            self.axis.synchronized_move(*first_intermediate)
+            self.axis.synchronized_move(*hybrid)
+            self.axis.synchronized_move(*last_intermediate)
+            self.move_to_square(home, 1, True, True)
+            self.magnet.pulse(100)
+            self.axis.write_queue()
+            self.magnet.deactivate()
+            piece.set_location(home)
+
+    def return_captured(self):
+        self.capture_manager.reset_board()
 
     def cleanup(self):
         self.close()
@@ -83,7 +127,7 @@ class Board:
         self.axis.move_axes(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
         # self.magnet.set_duty_cycle(100)
-        self.move_to_square(dest, time/4, active=True)
+        self.move_to_square(dest, time/4, compensate=True, active=True)
         self.axis.write_queue()
         self.magnet.deactivate()
 
@@ -99,20 +143,14 @@ class Board:
         x_target, y_target = self.convert_square_to_absolute(square)
 
         if compensate:
-            x_dir = x_target - self.location[0]
-            y_dir = y_target - self.location[1]
-            x_coeff = 0
-            y_coeff = 0
-            if x_dir < 0:
-                x_coeff = -1
-            if x_dir > 0:
-                x_coeff = 1
-            if y_dir < 0:
-                y_coeff = -1
-            if y_dir > 0:
-                y_coeff = 1
-            x_target += self.overshoot * x_coeff
-            y_target += self.overshoot * y_coeff
+            dx = x_target - self.location[0]
+            dy = y_target - self.location[1]
+            len_ = math.sqrt(dx**2 + dy**2)
+            unit_vector = (dx/len_, dy/len_)
+            x_target += unit_vector[0] * self.overshoot
+            y_target += unit_vector[1] * self.overshoot
+            print(f"OVERSHOOTING: {x_target}, {y_target}")
+            print(f"Direction of movement: ({unit_vector})")
 
         if active:
             self.axis.synchronized_move(x_target, y_target, time)

@@ -4,14 +4,17 @@ from GameSupervisor.SoundController import SoundController
 from JoyconInterface.Joycon import StandardChessJoycon
 from GameFiles.GameInterface import GameInterface
 from GameFiles.ChessErrors import *
-from BoardFiles import cleanup
+from BoardFiles import cleanup, red_button
 from queue import Queue
+import RPi.GPIO as GPIO
 import time
 
 
 class ChessGame:
 
     def __init__(self):
+        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 50)
+        self.button_callback = None
         self.errors = Queue()
         self.backend = GameInterface(self.errors, self.capture)
         self.lights = LightsInterface()
@@ -20,7 +23,7 @@ class ChessGame:
         self.audio.run_intro()
         self.board = BoardLogic()
 
-        time.sleep(5)
+        time.sleep(2)
 
         self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights)
         self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights)
@@ -29,8 +32,24 @@ class ChessGame:
         self.audio.run_midroll()
         self.run_game()
 
+    def button_press(self):
+        if self.button_callback:
+            self.button_callback()
+
     def capture(self, piece):
         self.board.capture(piece)
+
+    def play_again(self):
+        self.audio.run_intro()
+        remaining_pieces = self.backend.get_team_pieces("ALL")
+        # We need to move living pieces back to their starting square
+        for piece in remaining_pieces:
+            self.board.move_home(piece)
+        self.backend.reset_board()
+        self.board.return_captured()
+        self.backend.turn = "White"
+        self.lights.set_team("White")
+        self.audio.run_midroll()
 
     def run_game(self):
         run = True
@@ -59,8 +78,13 @@ class ChessGame:
             except Checkmate as e:
                 print(e)
                 self.audio.run_outro()
-                time.sleep(120)
-                run = False
+                GPIO.remove_event_detect(red_button)
+                channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=120000)
+                if channel is None:
+                    run = False
+                    print("Exiting")
+                else:
+                    self.play_again()
 
         self.backend.cleanup()
         self.lights.cleanup()

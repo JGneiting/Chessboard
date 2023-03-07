@@ -4,8 +4,9 @@ from GameFiles.ChessErrors import *
 class Piece:
     movement = [(0,1)]
 
-    def __init__(self, a_loc, loc, team, board):
-        self.abs_location = a_loc
+    def __init__(self, home, loc, team, board):
+        self.abs_location = None
+        self.home = loc
         self.location = loc
         self.team = team
         self.board = board
@@ -28,7 +29,7 @@ class Piece:
         self.dead = True
 
     def __deepcopy__(self, memodict={}):
-        return eval(f'{str(self)}(self.abs_location, self.location, self.team, None)')
+        return eval(f'{str(self)}(self.home, self.location, self.team, None)')
 
     def get_team(self):
         return self.team
@@ -102,7 +103,7 @@ class RangedPiece(Piece):
                         raise OutOfRange
                     if self.board.is_movable(self, f'{x_new}{y_new}'):
                         move_list.append(f'{x_new}{y_new}')
-                    if not self.board.square_empty(f'{x_new}{y_new}'):
+                    if (not self.board.square_empty(f'{x_new}{y_new}')) and str(self.board.get_square(f'{x_new}{y_new}')) != "GhostPawn":
                         break
                 except OutOfRange:
                     pass
@@ -116,12 +117,14 @@ class Pawn(Piece):
         super().__init__(*args)
         self.moved = False
 
+    def check_upgrade(self):
+        if int(self.location[1]) == 1 or int(self.location[1]) == 8:
+            raise PawnUpgrade
+
     def get_possible_moves(self):
         if self.board.get_turn() != self.team:
             return []
         squares = []
-        if int(self.location[1]) == 1 or int(self.location[1]) == 8:
-            raise PawnUpgrade
         x, y = self.character_swap(self.location[0]), int(self.location[1])
         y_new = y + self.movement[0][1]
         try:
