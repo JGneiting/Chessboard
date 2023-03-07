@@ -58,6 +58,10 @@ class SoundChannel:
         self.interface.send_message(self.current_message)
         self.current_message = SoundManagerMessage()
 
+    def stop_sound(self):
+        self.interface.send_message(self.current_message)
+        self.current_message = SoundManagerMessage()
+
 
 class BackgroundChannel(SoundChannel):
     songs = []
@@ -73,3 +77,7 @@ class BackgroundChannel(SoundChannel):
         print("Subscribing")
         self.current_message.add_argument("Subscribe", self.play_next)
         self.play_sound()
+
+    def stop_playback(self):
+        self.current_message.add_argument("Stop", self.channel)
+        self.stop_sound()

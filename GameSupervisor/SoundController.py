@@ -6,7 +6,7 @@ import pygame
 class SoundController:
 
     def __init__(self):
-        pygame.mixer.init(buffer=2048)
+        pygame.mixer.init(buffer=4096)
         pygame.init()
 
         self.interface = SoundInterface()
@@ -20,14 +20,17 @@ class SoundController:
 
     def run_intro(self):
         self.intro_track.play_next()
+        self.outro_track.stop()
         self.intro_track.subscribe()
 
     def run_midroll(self):
         self.midroll_track.play_next()
+        self.intro_track.stop()
         self.midroll_track.subscribe()
 
     def run_outro(self):
         self.outro_track.play_next()
+        self.midroll_track.stop()
         self.outro_track.subscribe()
 
 
