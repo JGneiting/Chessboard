@@ -33,7 +33,7 @@ class Board:
         home_abs = self.convert_square_to_absolute(home)
         location_abs = self.convert_square_to_absolute(location)
         if home != location:
-            if not piece.board.square_empty():
+            if not piece.board.square_empty(home):
                 self.move_home(piece.board.get_square(home))
             corner = f"{home[0]}{location[1]}"
             delta_y = 1
@@ -46,8 +46,8 @@ class Board:
             sq1 = self.convert_square_to_absolute("B3")
             sq2 = self.convert_square_to_absolute("C4")
             offset = (sq2[0]-(sq2[0] + sq1[0])/2, sq1[1]-(sq2[1] + sq1[1])/2)
-            first_intermediate = ((-1*offset[0]*delta_x)+location_abs[0], (offset[1]*delta_y)+location_abs[1])
-            last_intermediate = ((offset[0]*delta_x)+home_abs[0], (offset[1]*delta_y)+home_abs[1])
+            first_intermediate = ((offset[0]*delta_x)+location_abs[0], (-1*offset[1]*delta_y)+location_abs[1])
+            last_intermediate = ((offset[0]*delta_x)+home_abs[0], (-1*offset[1]*delta_y)+home_abs[1])
             hybrid = (first_intermediate[0], last_intermediate[1])
 
             # Move magnet to piece
@@ -59,7 +59,8 @@ class Board:
             self.axis.synchronized_move(*hybrid)
             self.axis.synchronized_move(*last_intermediate)
             self.move_to_square(home, 1, True, True)
-            self.magnet.pulse(100)
+            self.magnet.pulse(90)
+            sleep(.05)
             self.axis.write_queue()
             self.magnet.deactivate()
             piece.set_location(home)
@@ -78,13 +79,14 @@ class Board:
         self.move_to_square(square, time, compensate=True, active=True)
         # self.move_to_square(square, .25)
         self.axis.write_queue()
-        sleep(.5)
+        self.magnet.pulse(50)
+        # sleep(.5)
         self.magnet.deactivate()
-        for i in range(2):
-            self.magnet.activate()
-            sleep(.05)
-            self.magnet.deactivate()
-            sleep(.05)
+        # for i in range(2):
+        #     self.magnet.activate()
+        #     sleep(.05)
+        #     self.magnet.deactivate()
+        #     sleep(.05)
 
     def invert(self):
         self.inverted = not self.inverted
@@ -122,9 +124,9 @@ class Board:
             intermediates.append((delta_x2, delta_y))
         self.move_to_square(source, time/4)
         self.axis.write_queue()
-        self.magnet.pulse(60)
-        self.axis.move_axes(intermediates[0][0], intermediates[0][1])
-        self.axis.move_axes(intermediates[1][0], intermediates[1][1])
+        self.magnet.pulse(90)
+        self.axis.synchronized_move(intermediates[0][0], intermediates[0][1])
+        self.axis.synchronized_move(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
         # self.magnet.set_duty_cycle(100)
         self.move_to_square(dest, time/4, compensate=True, active=True)

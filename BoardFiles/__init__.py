@@ -35,10 +35,6 @@ GPIO.output(magnet_push, 0)
 # GPIO.output(v5_pin, 1)
 
 if __name__ == "__main__":
-    state = False
-    while True:
-        if state != GPIO.input(red_button):
-            state = GPIO.input(red_button)
-            print(state)
+    set_12v(True)
 
 

@@ -24,6 +24,14 @@ class StandardChessBackground(BackgroundChannel):
         self.next_song += 1
         self.next_song %= len(self.song_list)
 
+    def pause(self):
+        self.current_message.add_argument("Pause", True)
+        self.play_sound()
+
+    def unpause(self):
+        self.current_message.add_argument("Pause", False)
+        self.play_sound()
+
     def stop(self):
         self.set_fade(500)
         self.stop_playback()
@@ -42,6 +50,12 @@ class MidrollMusic(StandardChessBackground):
 class OutroMusic(StandardChessBackground):
     assigned_channel = 2
     song_lib = "SoundPlayer/GameSounds/Outro"
+
+
+class CheckMusic(StandardChessBackground):
+    assigned_channel = 3
+    song_lib = "SoundPlayer/GameSounds/Game Event Tracks/Check"
+    return_track = None
 
 
 class ChessSFX(SoundChannel):

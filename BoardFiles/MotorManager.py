@@ -211,15 +211,26 @@ class ThreadedAxis(threading.Thread):
 class SerialAxis:
 
     def __init__(self):
-        self.arduino = serial.Serial('/dev/ttyUSB0',
-                                     baudrate=9600,
-                                     bytesize=serial.EIGHTBITS,
-                                     parity=serial.PARITY_NONE,
-                                     stopbits=serial.STOPBITS_ONE,
-                                     timeout=1,
-                                     xonxoff=0,
-                                     rtscts=0
-                                     )
+        try:
+            self.arduino = serial.Serial('/dev/ttyUSB0',
+                                         baudrate=9600,
+                                         bytesize=serial.EIGHTBITS,
+                                         parity=serial.PARITY_NONE,
+                                         stopbits=serial.STOPBITS_ONE,
+                                         timeout=1,
+                                         xonxoff=0,
+                                         rtscts=0
+                                         )
+        except serial.SerialException:
+            self.arduino = serial.Serial('/dev/ttyUSB1',
+                                         baudrate=9600,
+                                         bytesize=serial.EIGHTBITS,
+                                         parity=serial.PARITY_NONE,
+                                         stopbits=serial.STOPBITS_ONE,
+                                         timeout=1,
+                                         xonxoff=0,
+                                         rtscts=0
+                                         )
         # Toggle DTR to reset Arduino
         self.arduino.setDTR(False)
         sleep(1)
@@ -269,6 +280,7 @@ class SerialAxis:
         speed = self.travel_speed
         pos_x *= 100
         pos_y *= 100
+        # self.generate_acceleration(pos_y, pos_x, speed, speed)
         command = f"MV {pos_y} {pos_x} {speed} {speed}"
         self.last_position = (pos_x, pos_y)
         self.cmd_queue.put(command)
@@ -284,12 +296,52 @@ class SerialAxis:
             theta = np.arctan(dy/dx)
         except ZeroDivisionError:
             theta = np.pi / 2
-        delay_x = round(self.move_speed * np.cos(theta))
-        delay_y = round(self.move_speed * np.sin(theta))
+        delay_x = round(self.move_speed * (np.cos(theta)))
+        delay_y = round(self.move_speed * (np.sin(theta)))
 
         command = f"MV {pos_y} {pos_x} {delay_y} {delay_x}"
+        print(command)
         self.last_position = (pos_x, pos_y)
         self.cmd_queue.put(command)
+        # self.generate_acceleration(pos_y, pos_x, delay_y, delay_x)
+
+    def generate_acceleration(self, end_y, end_x, delay_y, delay_x):
+        y_set = self.axial_acceleration(self.last_position[1], end_y, delay_y)  # type: dict
+        x_set = self.axial_acceleration(self.last_position[0], end_x, delay_x)  # type: dict
+
+        for y, x, x_delay, y_delay in zip(y_set.keys(), x_set.keys(), y_set.values(), x_set.values()):
+            command = f"MV {y} {x} {x_delay} {y_delay}"
+            self.cmd_queue.put(command)
+
+        self.last_position = (end_x, end_y)
+
+    def sliding_select(self, percent, start, end):
+        return ((1 - percent) * start) + (percent * end)
+
+    def axial_acceleration(self, start, end, delay):
+        moves = {}
+        # acceleration performed in first and last 2.5% of the move
+        move_percent = 0.25
+        delay_start = delay * 2
+        bins = 5
+        moves[start] = delay_start
+        delta = delay / bins
+        len_move = end - start
+        for i in range(bins):
+            new_position = round(self.sliding_select((i+1)/bins, start, start + (len_move*move_percent)), 2)
+            moves[new_position] = round(self.sliding_select((i+1)/bins, delay_start, delay))
+
+        # do a standard move at indicated speed to deceleration point
+        moves[round(end - (len_move*move_percent), 2)] = delay
+
+        # now decelerate
+        for i in range(bins):
+            new_position = round(self.sliding_select((i + 1) / 10, end - (len_move*move_percent), end), 2)
+            moves[new_position] = round(self.sliding_select((i+1)/bins, delay, delay_start))
+
+        # moves = sorted(moves)
+
+        return moves
 
     def kill(self):
         pass
