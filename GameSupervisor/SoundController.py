@@ -13,6 +13,7 @@ class SoundController:
         self.intro_track = IntroMusic(self.interface)
         self.midroll_track = MidrollMusic(self.interface)
         self.outro_track = OutroMusic(self.interface)
+        self.check_track = CheckMusic(self.interface)
 
 
     def cleanup(self):
@@ -31,6 +32,11 @@ class SoundController:
     def run_outro(self):
         self.outro_track.play_next()
         self.midroll_track.stop()
+        self.check_track.stop()
         self.outro_track.subscribe()
+
+    def play_check(self):
+        self.midroll_track.stop()
+        self.check_track.play_next()
 
 

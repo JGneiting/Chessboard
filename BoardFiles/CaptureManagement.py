@@ -66,7 +66,7 @@ class SlotManager:
 
 
 class CaptureSlot:
-    magnet_strength = 100
+    magnet_strength = 80
 
     def __init__(self, back, front, board, magnet, team=None, piece_type="ANY"):
         """
@@ -130,6 +130,7 @@ class CaptureSlot:
         return available
 
     def remove(self):
+        self.magnet.deactivate()
         while len(self.stored) > 0:
             piece = self.stored.pop()
 
