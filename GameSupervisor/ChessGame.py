@@ -15,9 +15,10 @@ class ChessGame:
     def __init__(self):
         GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 200)
         self.button_callback = None
+        self.castle_move = []
         self.moves_since_check = 10
         self.errors = Queue()
-        self.backend = GameInterface(self.errors, self.capture)
+        self.backend = GameInterface(self.errors, self.capture, self.castle)
         self.lights = LightsInterface()
         self.audio = SoundController()
         self.lights.run_pregame()
@@ -29,8 +30,8 @@ class ChessGame:
         self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights)
         self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights)
 
-        self.lights.set_team("White")
         self.audio.run_midroll()
+        self.lights.set_team("White")
         self.run_game()
 
     def button_press(self):
@@ -40,7 +41,11 @@ class ChessGame:
     def capture(self, piece):
         self.board.capture(piece)
 
+    def castle(self, source, dest):
+        self.castle_move = [source, dest]
+
     def play_again(self):
+        self.board.reset()
         self.audio.run_intro()
         remaining_pieces = self.backend.get_team_pieces("ALL")
         # We need to move living pieces back to their starting square
@@ -75,6 +80,9 @@ class ChessGame:
                 self.moves_since_check += 1
                 if not self.errors.empty():
                     raise self.errors.get()
+                if self.castle_move:
+                    self.board.move_intermediate(*self.castle_move)
+                    self.castle_move = []
             except TurnError as e:
                 # TODO: Play light sequence to assert whose turn it is
                 print(e)
@@ -91,6 +99,8 @@ class ChessGame:
                     print("Exiting")
                 else:
                     self.play_again()
+            except Stalemate as e:
+                pass
 
         self.backend.cleanup()
         self.lights.cleanup()

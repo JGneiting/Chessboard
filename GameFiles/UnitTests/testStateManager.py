@@ -130,6 +130,15 @@ class CheckLogic(unittest.TestCase):
         with self.assertRaises(Checkmate):
             board.move_piece("C3", "C8")
 
+    def test_stalemate_detection(self):
+        board = TestBoard()
+        board.create_piece("A1", "King")
+        board.create_piece("D3", "Queen", "Black")
+        board.turn = "Black"
+
+        with self.assertRaises(Stalemate):
+            board.move_piece("D3", "B3")
+
 
 class SimulatorIndependance(unittest.TestCase):
     def test_proper_copy(self):

@@ -10,8 +10,8 @@ class Piece:
         self.location = loc
         self.team = team
         self.board = board
-        self.abs_location = (0, 0)
         self.dead = False
+        self.moved = False
 
         if team != "Black" and team != "White":
             raise TeamError(team)
@@ -39,6 +39,12 @@ class Piece:
 
     def set_location(self, square):
         self.location = square
+
+    def piece_moved(self):
+        self.moved = True
+
+    def has_moved(self):
+        return self.moved
 
     def character_swap(self, char):
         char_map = {1:"A", 2:"B", 3:"C", 4:"D", 5:"E", 6:"F", 7:"G", 8:"H"}
@@ -115,7 +121,6 @@ class Pawn(Piece):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.moved = False
 
     def check_upgrade(self):
         if int(self.location[1]) == 1 or int(self.location[1]) == 8:
@@ -171,6 +176,36 @@ class Bishop(RangedPiece):
 
 class King(Piece):
     movement = [(1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)]
+
+    def get_possible_moves(self):
+        moves = super().get_possible_moves()
+        # We need to see if the king can castle. There are a number of conditions to check
+
+        for direction in [-1, 1]:
+            valid = True
+            # Condition 1. The King cannot have moved
+            if not self.has_moved():
+                # Condition 2. The rook in that direction cannot have moved
+                loc_num = int(self.location[1])
+                if direction == -1:
+                    loc_alpha = 1
+                else:
+                    loc_alpha = 8
+                rook = self.board.get_square(f"{self.character_swap(loc_alpha)}{loc_num}")
+                if str(rook) == "Rook" and not rook.has_moved():
+                    # Condition 3. There are no pieces in the two squares along the indicated direction
+                    path_square = f"{self.character_swap(self.character_swap(self.location[0]) + direction)}{loc_num}"
+                    destination = f"{self.character_swap(self.character_swap(self.location[0]) + (2*direction))}{loc_num}"
+                    if f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}" != rook.get_location():
+                        if not self.board.square_empty(f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}"):
+                            valid = False
+                    if self.board.square_empty(path_square) and self.board.square_empty(destination):
+                        # Condition 4. We are not in check
+                        if not self.board.checked(self.team):
+                            # Condition 5. We will not pass through check
+                            if self.board.is_movable(self, path_square) and self.board.is_movable(self, destination) and valid:
+                                moves.append(destination)
+        return moves
 
 
 class Queen(RangedPiece):
