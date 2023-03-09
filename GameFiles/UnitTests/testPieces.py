@@ -234,3 +234,69 @@ class TestKnight(unittest.TestCase):
         board.create_piece("C2", "Pawn", "Black")
         moves = knight.get_possible_moves()
         self.assertEqual(["C2"], moves)
+
+
+class TestKing(unittest.TestCase):
+
+    def test_castling(self):
+        board = TestBoard()
+        king = board.create_piece("E1", "King")
+        rook = board.create_piece("H1", "Rook")
+
+        moves = king.get_possible_moves()
+
+        self.assertIn("G1", moves)
+
+    def test_king_postmove_castling(self):
+        board = TestBoard(True)
+        king = board.create_piece("E2", "King")
+        rook = board.create_piece("H1", "Rook")
+        board.move_piece("E2", "E1")
+
+        moves = king.get_possible_moves()
+
+        self.assertNotIn("G1", moves)
+
+    def test_rook_postmove_castling(self):
+        board = TestBoard(True)
+        king = board.create_piece("E1", "King")
+        rook = board.create_piece("H2", "Rook")
+        board.move_piece("H2", "H1")
+
+        moves = king.get_possible_moves()
+
+        self.assertNotIn("G1", moves)
+
+    def test_obstructed_castling(self):
+        board = TestBoard(True)
+        king = board.create_piece("E1", "King")
+        rook = board.create_piece("H1", "Rook")
+        board.create_piece("F1", "Bishop")
+
+        moves = king.get_possible_moves()
+
+        self.assertNotIn("G1", moves)
+
+    def test_checked_castling(self):
+        board = TestBoard()
+        king = board.create_piece("E1", "King")
+        rook = board.create_piece("H1", "Rook")
+        board.create_piece("C7", "Bishop", "Black")
+        board.turn = "Black"
+        board.move_piece("C7", "A5")
+
+        moves = king.get_possible_moves()
+
+        self.assertNotIn("G1", moves)
+
+    def test_check_obstructed_castling(self):
+        board = TestBoard()
+        king = board.create_piece("E1", "King")
+        rook = board.create_piece("H1", "Rook")
+        board.create_piece("C6", "Bishop", "Black")
+        board.turn = "Black"
+        board.move_piece("C6", "B5")
+
+        moves = king.get_possible_moves()
+
+        self.assertNotIn("G1", moves)

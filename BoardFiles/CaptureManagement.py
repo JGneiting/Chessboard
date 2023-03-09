@@ -183,7 +183,6 @@ class CaptureSlot:
             self.board.axis.write_queue()
             self.magnet.deactivate()
 
-
     def store_piece(self, piece):
         """
         Stores a piece in the capture stack
@@ -196,6 +195,7 @@ class CaptureSlot:
         piece.abs_location = location
 
         self.execute_path(piece, location)
+        piece.dead = True
 
     def select_in_direction(self, x, y, source):
         char_map = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "H": 8}
