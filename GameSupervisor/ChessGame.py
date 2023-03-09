@@ -13,8 +13,9 @@ import time
 class ChessGame:
 
     def __init__(self):
-        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 50)
+        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 200)
         self.button_callback = None
+        self.moves_since_check = 10
         self.errors = Queue()
         self.backend = GameInterface(self.errors, self.capture)
         self.lights = LightsInterface()
@@ -67,6 +68,11 @@ class ChessGame:
                 else:
                     self.board.move_piece(source, dest, 1)
                 self.lights.set_team(self.backend.get_turn())
+                if self.backend.in_check is not None:
+                    if self.moves_since_check is None or self.moves_since_check > 6:
+                        self.audio.play_check()
+                        self.moves_since_check = 0
+                self.moves_since_check += 1
                 if not self.errors.empty():
                     raise self.errors.get()
             except TurnError as e:
@@ -79,7 +85,7 @@ class ChessGame:
                 print(e)
                 self.audio.run_outro()
                 GPIO.remove_event_detect(red_button)
-                channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=120000)
+                channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
                 if channel is None:
                     run = False
                     print("Exiting")

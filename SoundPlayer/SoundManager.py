@@ -7,7 +7,7 @@ from BoardFiles import set_5v
 
 class SoundManager(threading.Thread):
 
-    def __init__(self, thread_id, name, counter, command_queue, channels=3):
+    def __init__(self, thread_id, name, counter, command_queue, channels=5):
         super().__init__()
         self.threadID = thread_id
         self.name = name
@@ -34,6 +34,12 @@ class SoundManager(threading.Thread):
                     self.callback = command.args["Subscribe"]
                 elif "Stop" in command.args.keys():
                     self.channels[command.args["Stop"]].fadeout(command.args["fade_ms"])
+                elif "Pause" in command.args.keys():
+                    pause_status = command.args["Pause"]
+                    if pause_status:
+                        self.channels[command.args["channel"]].pause()
+                    else:
+                        self.channels[command.args["channel"]].unpause()
                 else:
                     self.play_on_channel(**command.args)
             if not pygame.mixer.get_busy() and self.currently_playing:
