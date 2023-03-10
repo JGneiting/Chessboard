@@ -190,6 +190,9 @@ class Board:
 
         return self.convert_axes(x_percent, y_percent)
 
+    def move_absolute(self, x_percent, y_percent):
+        self.axis.synchronized_move(*self.convert_axes(x_percent, y_percent))
+
     def convert_axes(self, x_percent, y_percent):
         left_x_range = self.sq_2[0] - self.sq_3[0]
         left_x = x_percent * left_x_range + self.sq_3[0]

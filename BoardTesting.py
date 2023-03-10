@@ -13,10 +13,12 @@ run = True
 i = 0
 teams = ["White", "Black"]
 while run:
-    x = float(input("X: "))
-    y = float(input("Y: "))
-    board.axis.synchronized_move(*board.convert_axes(x, y))
-    board.axis.write_queue()
+    source = input("Source: ")
+    if (i/2) % 2 == 0:
+        piece = Pawn(source, source, teams[i%2], None)
+    else:
+        piece = Rook(source, source, teams[i%2], None)
+    board.capture(piece)
     run = "n" != input("Continue? (y/n): ")
     i += 1
 
