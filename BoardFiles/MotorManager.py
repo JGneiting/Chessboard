@@ -301,9 +301,13 @@ class SerialAxis:
             delay_x = round(1/(speed * np.cos(theta)))
         except ZeroDivisionError:
             delay_x = 0
+        except OverflowError:
+            delay_x = 0
         try:
             delay_y = round(1/(speed * np.sin(theta)))
         except ZeroDivisionError:
+            delay_y = 0
+        except OverflowError:
             delay_y = 0
 
         command = f"MV {pos_y} {pos_x} {delay_y} {delay_x}"
