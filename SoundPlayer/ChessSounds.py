@@ -55,7 +55,11 @@ class OutroMusic(StandardChessBackground):
 class CheckMusic(StandardChessBackground):
     assigned_channel = 3
     song_lib = "SoundPlayer/GameSounds/Game Event Tracks/Check"
-    return_track = None
+
+
+class StalemateMusic(StandardChessBackground):
+    assigned_channel = 2
+    song_lib = "SoundPlayer/GameSounds/Game Event Tracks/Stalemate"
 
 
 class ChessSFX(SoundChannel):
