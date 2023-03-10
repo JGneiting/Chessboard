@@ -100,7 +100,15 @@ class ChessGame:
                 else:
                     self.play_again()
             except Stalemate as e:
-                pass
+                print(e)
+                self.audio.run_stalemate()
+                GPIO.remove_event_detect(red_button)
+                channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
+                if channel is None:
+                    run = False
+                    print("Exiting")
+                else:
+                    self.play_again()
 
         self.backend.cleanup()
         self.lights.cleanup()
