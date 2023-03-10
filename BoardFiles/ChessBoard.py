@@ -185,25 +185,31 @@ class Board:
             col = abs(col - 9)
             i = abs(i - 9)
 
+        x_percent = (8 - i) / 7
+        y_percent = (8 - col) / 7
+
+        return self.convert_axes(x_percent, y_percent)
+
+    def convert_axes(self, x_percent, y_percent):
         left_x_range = self.sq_2[0] - self.sq_3[0]
-        left_x = (8 - i) / 7 * left_x_range + self.sq_3[0]
+        left_x = x_percent * left_x_range + self.sq_3[0]
 
         right_x_range = self.sq_1[0] - self.sq_4[0]
-        right_x = (8 - i) / 7 * right_x_range + self.sq_4[0]
+        right_x = x_percent * right_x_range + self.sq_4[0]
 
         x_range = right_x - left_x
-        x_target = (8 - col) / 7 * x_range + left_x
+        x_target = y_percent * x_range + left_x
 
         lower_y_range = self.sq_4[1] - self.sq_3[1]
-        lower_y = (8 - col) / 7 * lower_y_range + self.sq_3[1]
+        lower_y = y_percent * lower_y_range + self.sq_3[1]
 
         upper_y_range = self.sq_1[1] - self.sq_2[1]
-        upper_y = (8 - col) / 7 * upper_y_range + self.sq_2[1]
+        upper_y = y_percent * upper_y_range + self.sq_2[1]
 
         y_range = upper_y - lower_y
-        y_target = (8 - i) / 7 * y_range + lower_y
+        y_target = x_percent * y_range + lower_y
 
-        return (x_target, y_target)
+        return x_target, y_target
 
     def close(self):
         self.axis.kill()
