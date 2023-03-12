@@ -3,9 +3,11 @@ from GameFiles.ChessPieces import *
 
 
 class TestBoard(ChessLogic):
-    def __init__(self, single_team=False):
+    def __init__(self, single_team=False, upgrade_interface=False):
         super().__init__()
         self.single = single_team
+        self.upgrade = upgrade_interface
+        self.upgrade_name = ""
 
         self.board = [[None]*8 for i in range(8)]
 
@@ -27,5 +29,13 @@ class TestBoard(ChessLogic):
         self.set_square(location, piece)
         return piece
 
+    def set_upgrade_piece(self, name):
+        self.upgrade_name = name
+
+    def get_pawn_upgrade(self, pawn):
+        if self.upgrade:
+            super().upgrade_pawn(pawn, self.upgrade_name)
+        else:
+            super().get_pawn_upgrade(pawn)
 
 

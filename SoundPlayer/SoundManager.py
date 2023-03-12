@@ -7,7 +7,7 @@ from BoardFiles import set_5v
 
 class SoundManager(threading.Thread):
 
-    def __init__(self, thread_id, name, counter, command_queue, channels=5):
+    def __init__(self, thread_id, name, counter, command_queue, channels=10):
         super().__init__()
         self.threadID = thread_id
         self.name = name

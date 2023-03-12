@@ -15,10 +15,11 @@ class ChessGame:
     def __init__(self):
         GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 200)
         self.button_callback = None
+        self.upgrade = []
         self.castle_move = []
         self.moves_since_check = 10
         self.errors = Queue()
-        self.backend = GameInterface(self.errors, self.capture, self.castle)
+        self.backend = GameInterface(self.errors, self.capture, self.castle, self.upgrade_pawn)
         self.lights = LightsInterface()
         self.audio = SoundController()
         self.lights.run_pregame()
@@ -27,8 +28,9 @@ class ChessGame:
 
         time.sleep(2)
 
-        self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights)
-        self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights)
+        joycon_audio = self.audio.create_ryan()
+        self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
+        self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
 
         self.audio.run_midroll()
         self.lights.set_team("White")
@@ -43,6 +45,11 @@ class ChessGame:
 
     def castle(self, source, dest):
         self.castle_move = [source, dest]
+
+    def upgrade_pawn(self, pawn, player):
+        self.audio.pause_midroll()
+        self.backend.wait_for_upgrade(pawn, player)
+        self.audio.unpause_midroll()
 
     def play_again(self):
         self.board.reset()
@@ -83,6 +90,8 @@ class ChessGame:
                 if self.castle_move:
                     self.board.move_intermediate(*self.castle_move)
                     self.castle_move = []
+                if self.upgrade and False:
+                    self.backend.wait_for_upgrade(self.upgrade[0], self.upgrade[1])
             except TurnError as e:
                 # TODO: Play light sequence to assert whose turn it is
                 print(e)
