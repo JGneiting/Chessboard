@@ -129,4 +129,6 @@ class GameInterface(ChessLogic):
     def wait_for_upgrade(self, pawn, player):
         while player.upgrading:
             time.sleep(1)
-        super().upgrade_pawn(pawn, player.selection)
+        selection = player.selection
+        super().upgrade_pawn(pawn, selection)
+        return selection

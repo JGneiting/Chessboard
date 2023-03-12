@@ -240,7 +240,7 @@ class SerialAxis:
         self.arduino.setDTR(True)
         sleep(2)
 
-        self.travel_speed = 40
+        self.travel_speed = 45
         self.move_speed = 80
 
         self.last_position = (100, 100)
