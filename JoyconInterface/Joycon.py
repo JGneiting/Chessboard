@@ -63,7 +63,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
     controller_count = 1
     rumble_type = RumbleData(400, 800, .8)
 
-    def __init__(self, side, game_interface, light_interface=None):
+    def __init__(self, side, game_interface, light_interface=None, sfx_track=None):
         if side == "LEFT":
             id_ = get_L_id()
             self.delta = -1
@@ -78,6 +78,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
 
         self.lights = light_interface  # type: LightsInterface
         self.side = side
+        self.sfx = sfx_track
         self.state_function = self.piece_selection
         self.monitor_comm = queue.Queue()
         self.stick_monitor = StickMonitor(4, "Monitor", 4, side, self.stick_event, self, self.monitor_comm)
@@ -87,8 +88,17 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         self.stick_home = self.get_home()
 
         self.selected = None
+        self.upgrade_order = ["Queen", "Bishop", "Knight", "Rook"]
         if self.color == "White":
             self.select_first()
+
+    def upgrade_pawn(self, pawn):
+        self.upgrading = True
+        self.cursor = 0
+        self.state_function = self.select_upgrade_type
+        if self.sfx:
+            self.sfx.set_song("Instructions")
+            self.sfx.play_sound()
 
     def cleanup(self):
         self.monitor_comm.put(0)
@@ -125,7 +135,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
             # print(f"Drawing Cursor: {self.cursor}")
             if self.state_function == self.piece_selection:
                 self.lights.select_square(self.cursor, 0)
-            else:
+            elif self.state_function == self.move_selection:
                 self.lights.select_square(self.cursor, 1)
 
     def select_first(self):
@@ -182,6 +192,23 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
             # if fitness[min_fitness] < threshold:
             self.cursor = self.translate_point(plot[min_fitness])
 
+    def select_upgrade_type(self, button, state):
+        if button == "Joystick":
+            if state < 90 or state > 270:
+                self.cursor += 1
+                self.cursor %= len(self.upgrade_order)
+            else:
+                self.cursor -= 1
+                if self.cursor < 0:
+                    self.cursor += len(self.upgrade_order)
+            if self.sfx:
+                self.sfx.set_song(self.upgrade_order[self.cursor])
+                self.sfx.play_sound()
+        elif (button == 'x' or button == 'down') and state:
+            self.submit_upgrade(self.upgrade_order[self.cursor])
+            self.upgrading = False
+            self.state_function = self.piece_selection
+
     def move_selection(self, button, state):
         if self.query_my_turn():
             if button == "Joystick":
@@ -230,7 +257,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
     def joycon_button_event(self, button, state):
         # print(f"{button}: {state}")
         if self.board is not None:
-            if self.query_my_turn():
+            if self.query_my_turn() or self.upgrading:
                 if (button == "zl" or button == "zr") and state:
                     self.recalibrate()
                 else:

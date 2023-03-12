@@ -121,7 +121,7 @@ class CaptureSlot:
         if self.team is not None and piece.get_team() != self.team:
             available = False
         # Check if the piece type can be in the slot
-        piece_name = str(piece)
+        piece_name = piece.piece_type()
         if self.piece_type != "Any":
             if self.piece_type == "-Pawn":
                 if piece_name == "Pawn":

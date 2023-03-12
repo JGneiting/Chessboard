@@ -115,6 +115,19 @@ class ChessLogic(InternalBoard):
         rook.set_location(rook_loc)
         return rook_loc
 
+    def upgrade_pawn(self, pawn, target_piece_name):
+        new_piece = eval(f"{target_piece_name}(0, pawn.get_location(), pawn.get_team(), self)")
+        wrapped_pawn = SuperPawn(new_piece)
+        self.set_square(pawn.get_location(), wrapped_pawn)
+
+    def get_pawn_upgrade(self, pawn):
+        """
+        This function provides an access point to upgrade pawns from
+        MUST BE OVERRIDDEN
+        :return:
+        """
+        raise PawnUpgrade
+
     def move_piece(self, source, dest):
         success = False
         occupant = self.get_square(source)
@@ -158,7 +171,10 @@ class ChessLogic(InternalBoard):
                 success = True
                 self.run_check_cycle()
                 if str(occupant) == "Pawn" and type(self) != Simulator:
-                    occupant.check_upgrade()
+                    try:
+                        occupant.check_upgrade()
+                    except PawnUpgrade as e:
+                        self.get_pawn_upgrade(occupant)
                 self.next_player()
                 self.run_stalemate_test()
             else:

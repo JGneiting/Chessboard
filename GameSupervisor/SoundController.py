@@ -6,7 +6,7 @@ import pygame
 class SoundController:
 
     def __init__(self):
-        pygame.mixer.init(buffer=4096)
+        pygame.mixer.init(buffer=4096, channels=10)
         pygame.init()
 
         self.interface = SoundInterface()
@@ -16,6 +16,8 @@ class SoundController:
         self.check_track = CheckMusic(self.interface)
         self.stalemate_track = StalemateMusic(self.interface)
 
+    def create_ryan(self):
+        return Ryan(self.interface)
 
     def cleanup(self):
         self.interface.cleanup()
@@ -45,5 +47,11 @@ class SoundController:
         self.midroll_track.stop()
         self.check_track.stop()
         self.stalemate_track.subscribe()
+
+    def pause_midroll(self):
+        self.midroll_track.pause()
+
+    def unpause_midroll(self):
+        self.midroll_track.unpause()
 
 

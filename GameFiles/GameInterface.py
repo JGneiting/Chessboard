@@ -1,4 +1,5 @@
 from GameFiles.StateManager import ChessLogic
+import threading
 from GameFiles.ChessErrors import *
 import time
 
@@ -9,6 +10,8 @@ class Player:
         self.board = game_interface  # type: GameInterface
         self.color = game_interface.add_player(self)
         self.inverted = self.color == "Black"
+        self.upgrading = False
+        self.selection = None
         print(self.color)
 
     def my_turn(self):
@@ -27,11 +30,19 @@ class Player:
         return self.board.get_team_pieces(self.color)
 
     def make_move(self, source, dest):
-        self.board.move_piece(source, dest)
+        # self.board.move_piece(source, dest)
+        self.board.move = (source, dest)
 
     def upgrade_pawn(self, pawn):
-        # TODO: This function will need to be overridden to handle querying a piece type from the user
-        return None
+        """
+        This function needs overridden by the player interface to select a target piece type
+        :param pawn: Pawn object being upgraded
+        :return:
+        """
+        return "Queen"
+
+    def submit_upgrade(self, piece_type):
+        self.selection = piece_type
 
     def cleanup(self):
         pass
@@ -43,13 +54,18 @@ class GameInterface(ChessLogic):
     assigned = 0
     move = None
 
-    def __init__(self, error_queue=None, capture_callback=None, castle_callback=None):
+    def __init__(self, error_queue=None, capture_callback=None, castle_callback=None, upgrade_callback=None):
         super().__init__()
 
         self.players = []
         self.error_report = error_queue
         self.capture_call = capture_callback
         self.castle_call = castle_callback
+        self.upgrade_call = upgrade_callback
+
+    def get_active_player(self):
+        index = self.team_order.index(self.turn)
+        return self.players[index]
 
     def capture(self, piece, square):
         self.capture_call(piece)
@@ -59,6 +75,10 @@ class GameInterface(ChessLogic):
         rook_source = rook.get_location()
         rook_loc = super().castle(king, rook, destination)
         self.castle_call(rook_loc, rook_source)
+
+    def get_pawn_upgrade(self, pawn):
+        self.get_active_player().upgrade_pawn(pawn)
+        self.upgrade_call(pawn, self.get_active_player())
 
     def cleanup(self):
         for player in self.players:
@@ -82,7 +102,7 @@ class GameInterface(ChessLogic):
     def move_piece(self, source, dest):
         try:
             super().move_piece(source, dest)
-            self.move = (source, dest)
+            # self.move = (source, dest)
             return
         except Checkmate as e:
             if self.error_report:
@@ -101,6 +121,12 @@ class GameInterface(ChessLogic):
             time.sleep(.1)
             if not self.error_report.empty():
                 break
+        self.move_piece(*self.move)
         temp = self.move
         self.move = None
         return temp
+
+    def wait_for_upgrade(self, pawn, player):
+        while player.upgrading:
+            time.sleep(1)
+        super().upgrade_pawn(pawn, player.selection)

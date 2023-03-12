@@ -77,6 +77,9 @@ class Piece:
 
         return move_list
 
+    def piece_type(self):
+        return str(self)
+
     def __str__(self):
         return f'{type(self)}'[30:-2]
 
@@ -223,3 +226,15 @@ class GhostPawn(Pawn):
 
     def get_linked_pawn(self):
         return self.link
+
+
+class SuperPawn(Piece):
+
+    def __init__(self, baseObject):
+        self.__class__ = type(baseObject.__class__.__name__,
+                              (self.__class__, baseObject.__class__),
+                              {})
+        self.__dict__ = baseObject.__dict__
+
+    def piece_type(self):
+        return "Pawn"
