@@ -29,10 +29,12 @@ class SoundController:
         self.intro_track.subscribe()
 
     def run_midroll(self):
-        self.midroll_track.play_next()
+        # self.midroll_track.play_next()
         self.midroll_track.subscribe()
         self.intro_track.stop()
 
+    def stop_midroll(self):
+        self.midroll_track.stop()
 
     def run_outro(self):
         self.outro_track.play_next()

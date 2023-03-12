@@ -32,14 +32,24 @@ class ChessGame:
         self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
         self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
 
-        self.lights.set_team("White")
         time.sleep(2)
         self.audio.run_midroll()
+        self.button_callback = self.reset_game
+        self.lights.stop_show()
+        self.lights.set_team("White")
         self.run_game()
 
     def button_press(self, state):
         if self.button_callback:
             self.button_callback()
+
+    def reset_game(self):
+        # Must hold button for 2 seconds to reset board
+        time.sleep(2)
+        if not GPIO.input(red_button):
+            self.button_callback = None
+            self.audio.stop_midroll()
+            self.play_again()
 
     def capture(self, piece):
         self.board.capture(piece)
@@ -49,12 +59,14 @@ class ChessGame:
 
     def upgrade_pawn(self, pawn, player):
         self.audio.pause_midroll()
-        self.backend.wait_for_upgrade(pawn, player)
+        target = self.backend.wait_for_upgrade(pawn, player)
         self.audio.unpause_midroll()
+        # TODO: Check if the target piece can be revived from the dead
 
     def play_again(self):
         self.board.reset()
         self.audio.run_intro()
+        self.lights.run_pregame()
         remaining_pieces = self.backend.get_team_pieces("ALL")
         # We need to move living pieces back to their starting square
         for piece in remaining_pieces:
@@ -62,8 +74,10 @@ class ChessGame:
         self.backend.reset_board()
         self.board.return_captured()
         self.backend.turn = "White"
+        self.lights.stop_show()
         self.lights.set_team("White")
         self.audio.run_midroll()
+        self.button_callback = self.reset_game
 
     def run_game(self):
         run = True
