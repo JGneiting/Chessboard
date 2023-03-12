@@ -240,8 +240,8 @@ class SerialAxis:
         self.arduino.setDTR(True)
         sleep(2)
 
-        self.travel_speed = 20
-        self.move_speed = 40
+        self.travel_speed = 40
+        self.move_speed = 80
 
         self.last_position = (100, 100)
         self.cmd_queue = Queue()
@@ -296,8 +296,19 @@ class SerialAxis:
             theta = np.arctan(dy/dx)
         except ZeroDivisionError:
             theta = np.pi / 2
-        delay_x = round(self.move_speed * (np.cos(theta)))
-        delay_y = round(self.move_speed * (np.sin(theta)))
+        speed = 1 / self.move_speed
+        try:
+            delay_x = round(1/(speed * np.cos(theta)))
+        except ZeroDivisionError:
+            delay_x = 0
+        except OverflowError:
+            delay_x = 0
+        try:
+            delay_y = round(1/(speed * np.sin(theta)))
+        except ZeroDivisionError:
+            delay_y = 0
+        except OverflowError:
+            delay_y = 0
 
         command = f"MV {pos_y} {pos_x} {delay_y} {delay_x}"
         print(command)

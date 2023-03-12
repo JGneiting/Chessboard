@@ -50,3 +50,9 @@ class PlayerError(Exception):
 
     def __init__(self):
         super().__init__(f"Too many players added to the game!")
+
+
+class Stalemate(Exception):
+
+    def __init__(self):
+        super().__init__("Stalemate! Its a tie!")

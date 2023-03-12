@@ -93,10 +93,27 @@ class ChessLogic(InternalBoard):
         except InvalidMove:
             return False
 
+    def create_simulator(self):
+        return Simulator(self)
+
     def simulate_move(self, piece, square):
-        test_board = Simulator(self)
+        test_board = self.create_simulator()
         test_board.move_piece(piece.get_location(), square)
         return not test_board.checked(piece.get_team())
+
+    def castle(self, king, rook, destination):
+        # Determine what side the king is coming from
+        alpha_key = king.character_swap(destination[0])
+        if king.get_location()[0] < rook.get_location()[0]:
+            # The king is on the left of the rook
+            rook_loc = f"{king.character_swap(alpha_key-1)}{destination[1]}"
+        else:
+            # The king is on the right of the rook
+            rook_loc = f"{king.character_swap(alpha_key+1)}{destination[1]}"
+        self.set_square(rook_loc, rook)
+        self.set_square(rook.get_location(), None)
+        rook.set_location(rook_loc)
+        return rook_loc
 
     def move_piece(self, source, dest):
         success = False
@@ -124,18 +141,33 @@ class ChessLogic(InternalBoard):
                         ghost = GhostPawn(occupant, passed_square, occupant.get_team(), self)
                         self.set_square(passed_square, ghost)
                         self.ghosts.append(ghost)
+                elif str(occupant) == "King":
+                    if abs(self.named_to_numeric(dest)[1] - self.named_to_numeric(source)[1]) == 2:
+                        # This is a castling move, we need to find the target rook
+                        if self.named_to_numeric(dest)[1] > self.named_to_numeric(source)[1]:
+                            row = "H"
+                        else:
+                            row = "A"
+                        rook = self.get_square(f"{row}{source[1]}")
+                        self.castle(occupant, rook, dest)
                 occupant.set_location(dest)
                 self.set_square(source, None)
                 self.set_square(dest, occupant)
                 self.in_check = None
+                occupant.moved = True
                 success = True
                 self.run_check_cycle()
                 if str(occupant) == "Pawn" and type(self) != Simulator:
                     occupant.check_upgrade()
                 self.next_player()
+                self.run_stalemate_test()
             else:
                 raise InvalidMove(dest, move_set)
         return success
+
+    def run_stalemate_test(self):
+        if len(self.get_team_moves(self.turn, True)) == 0:
+            raise Stalemate()
 
     def capture(self, piece, square):
         self.captured.append(piece)
@@ -170,8 +202,11 @@ class ChessLogic(InternalBoard):
             raise Checkmate(temp)
         self.turn = temp
 
-    def get_team_moves(self, team):
+    def get_team_moves(self, team, ignore_team=False):
         team_moves = {}
+        temp = self.turn
+        if ignore_team:
+            self.turn = team
         for i in range(8):
             for j in range(8):
                 if self.board[i][j] is not None and self.board[i][j].get_team() == team:
@@ -179,6 +214,7 @@ class ChessLogic(InternalBoard):
                     moves = piece.get_possible_moves()
                     if moves:
                         team_moves[piece.get_location()] = moves
+        self.turn = temp
         return team_moves
 
     def get_team_pieces(self, team):
@@ -212,3 +248,6 @@ class Simulator(ChessLogic):
             if piece.get_team() == occupant.get_team():
                 return False
         return True
+
+    def run_stalemate_test(self):
+        pass

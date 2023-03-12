@@ -50,9 +50,11 @@ class SlotManager:
                 back = (x, self.slot_span[i])
                 if i == 0:
                     front = (x, 0.5 - delta)
+                    home_abs = self.board.convert_axes(0.5, 1)[1]
                 else:
                     front = (x, 0.5 + delta)
-                self.slots.append(CaptureSlot(back, front, self.board, self.magnet, team=team, piece_type="Pawn"))
+                    home_abs = self.board.convert_axes(0.5, 0)[1]
+                self.slots.append(CaptureSlot(back, front, home_abs, self.board, self.magnet, team=team, piece_type="Pawn"))
 
         # Y is on the player side and store the other team's pieces and only pawns
         for y in self.extremes:
@@ -60,15 +62,17 @@ class SlotManager:
                 back = (self.slot_span[i], y)
                 if i == 0:
                     front = (0.5 - delta, y)
+                    home_abs = self.board.convert_axes(1, 0.5)[0]
                 else:
                     front = (0.5 + delta, y)
-                self.slots.append(CaptureSlot(back, front, self.board, self.magnet, team=team, piece_type="-Pawn"))
+                    home_abs = self.board.convert_axes(0, 0.5)[0]
+                self.slots.append(CaptureSlot(back, front, home_abs, self.board, self.magnet, team=team, piece_type="-Pawn"))
 
 
 class CaptureSlot:
     magnet_strength = 80
 
-    def __init__(self, back, front, board, magnet, team=None, piece_type="ANY"):
+    def __init__(self, back, front, axis_abs, board, magnet, team=None, piece_type="ANY"):
         """
         Creates a capture slot to store captured pieces in
         :param back: Coordinate of first (deepest) slot
@@ -100,14 +104,14 @@ class CaptureSlot:
                 load_x -= abs(offset)
             else:
                 load_x += abs(offset)
-            load_y = 0.5
+            load_y = axis_abs
         else:
             self.central_axis = "Y"
             if load_y > 0.5:
                 load_y -= abs(offset)
             else:
                 load_y += abs(offset)
-            load_x = 0.5
+            load_x = axis_abs
 
         self.loading_zone = (load_x, load_y)
 
@@ -154,7 +158,7 @@ class CaptureSlot:
             if self.piece_type == "Pawn":
                 # ++++ PAWN STORAGE ++++
                 # We need to move pawn to the center of the board
-                self.board.axis.synchronized_move(0.5, 0.5, 1)
+                self.board.move_absolute(0.5, 0.5)
                 # Now we move it to its slot
                 self.board.axis.synchronized_move(*self.board.convert_square_to_absolute(piece.home))
             else:
@@ -183,7 +187,6 @@ class CaptureSlot:
             self.board.axis.write_queue()
             self.magnet.deactivate()
 
-
     def store_piece(self, piece):
         """
         Stores a piece in the capture stack
@@ -196,6 +199,7 @@ class CaptureSlot:
         piece.abs_location = location
 
         self.execute_path(piece, location)
+        piece.dead = True
 
     def select_in_direction(self, x, y, source):
         char_map = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "H": 8}

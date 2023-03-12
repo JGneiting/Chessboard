@@ -22,48 +22,60 @@ class Board:
         self.sq_4 = (.89, .143)
         self.overshoot = .0065
         self.rail_compensate = .0015
+        self.return_attempts = []
 
         self.capture_manager = SlotManager(self, self.magnet)
+
+    def reset(self):
+        self.return_attempts = []
 
     def move_home(self, piece):
         # There is an intermediate path in the shape of an L between any two squares.
         # Determine the corner square by taking a letter from one and the number from the other
         home = piece.home
         location = piece.get_location()
-        home_abs = self.convert_square_to_absolute(home)
-        location_abs = self.convert_square_to_absolute(location)
         if home != location:
             if not piece.board.square_empty(home):
+                if piece.board.get_square(home) in self.return_attempts:
+                    self.return_attempts.append(piece)
+                    self.capture(piece)
+                    return
                 self.move_home(piece.board.get_square(home))
-            corner = f"{home[0]}{location[1]}"
-            delta_y = 1
-            if home[0] > location[0]:
-                delta_y = -1
-            delta_x = 1
-            if home[1] > location[1]:
-                delta_x = -1
-
-            sq1 = self.convert_square_to_absolute("B3")
-            sq2 = self.convert_square_to_absolute("C4")
-            offset = (sq2[0]-(sq2[0] + sq1[0])/2, sq1[1]-(sq2[1] + sq1[1])/2)
-            first_intermediate = ((offset[0]*delta_x)+location_abs[0], (-1*offset[1]*delta_y)+location_abs[1])
-            last_intermediate = ((offset[0]*delta_x)+home_abs[0], (-1*offset[1]*delta_y)+home_abs[1])
-            hybrid = (first_intermediate[0], last_intermediate[1])
-
-            # Move magnet to piece
-            self.move_to_square(location, 1)
-            self.axis.write_queue()
-
-            # Queue the move
-            self.axis.synchronized_move(*first_intermediate)
-            self.axis.synchronized_move(*hybrid)
-            self.axis.synchronized_move(*last_intermediate)
-            self.move_to_square(home, 1, True, True)
-            self.magnet.pulse(90)
-            sleep(.05)
-            self.axis.write_queue()
-            self.magnet.deactivate()
+            self.move_intermediate(home, location)
             piece.set_location(home)
+            piece.board.set_square(home, piece)
+
+    def move_intermediate(self, home, location):
+        home_abs = self.convert_square_to_absolute(home)
+        location_abs = self.convert_square_to_absolute(location)
+        corner = f"{home[0]}{location[1]}"
+        delta_x = 1
+        if home[1] > location[1]:
+            delta_x = -1
+        delta_y = 1
+        if home[0] > location[0]:
+            delta_y = -1
+
+        sq1 = self.convert_square_to_absolute("B3")
+        sq2 = self.convert_square_to_absolute("C4")
+        offset = (sq2[0] - (sq2[0] + sq1[0]) / 2, sq1[1] - (sq2[1] + sq1[1]) / 2)
+        first_intermediate = (-1 * delta_x * offset[0] + location_abs[0], delta_y * offset[1] + location_abs[1])
+        last_intermediate = (delta_x * offset[0] + home_abs[0], delta_y * offset[1] + home_abs[1])
+        hybrid = (first_intermediate[0], last_intermediate[1])
+
+        # Move magnet to piece
+        self.move_to_square(location, 1)
+        self.axis.write_queue()
+
+        # Queue the move
+        self.axis.synchronized_move(*first_intermediate)
+        self.axis.synchronized_move(*hybrid)
+        self.axis.synchronized_move(*last_intermediate)
+        self.move_to_square(home, 1, True, True)
+        self.magnet.pulse(90)
+        sleep(.05)
+        self.axis.write_queue()
+        self.magnet.deactivate()
 
     def return_captured(self):
         self.capture_manager.reset_board()
@@ -173,25 +185,34 @@ class Board:
             col = abs(col - 9)
             i = abs(i - 9)
 
+        x_percent = (8 - i) / 7
+        y_percent = (8 - col) / 7
+
+        return self.convert_axes(x_percent, y_percent)
+
+    def move_absolute(self, x_percent, y_percent):
+        self.axis.synchronized_move(*self.convert_axes(x_percent, y_percent))
+
+    def convert_axes(self, x_percent, y_percent):
         left_x_range = self.sq_2[0] - self.sq_3[0]
-        left_x = (8 - i) / 7 * left_x_range + self.sq_3[0]
+        left_x = x_percent * left_x_range + self.sq_3[0]
 
         right_x_range = self.sq_1[0] - self.sq_4[0]
-        right_x = (8 - i) / 7 * right_x_range + self.sq_4[0]
+        right_x = x_percent * right_x_range + self.sq_4[0]
 
         x_range = right_x - left_x
-        x_target = (8 - col) / 7 * x_range + left_x
+        x_target = y_percent * x_range + left_x
 
         lower_y_range = self.sq_4[1] - self.sq_3[1]
-        lower_y = (8 - col) / 7 * lower_y_range + self.sq_3[1]
+        lower_y = y_percent * lower_y_range + self.sq_3[1]
 
         upper_y_range = self.sq_1[1] - self.sq_2[1]
-        upper_y = (8 - col) / 7 * upper_y_range + self.sq_2[1]
+        upper_y = y_percent * upper_y_range + self.sq_2[1]
 
         y_range = upper_y - lower_y
-        y_target = (8 - i) / 7 * y_range + lower_y
+        y_target = x_percent * y_range + lower_y
 
-        return (x_target, y_target)
+        return x_target, y_target
 
     def close(self):
         self.axis.kill()

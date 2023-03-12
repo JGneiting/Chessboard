@@ -9,6 +9,10 @@ class TestBoard(ChessLogic):
 
         self.board = [[None]*8 for i in range(8)]
 
+    def run_stalemate_test(self):
+        if not self.single:
+            super().run_stalemate_test()
+
     def initialize_board(self):
         pass
 

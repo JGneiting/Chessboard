@@ -1,2 +1,2 @@
-from GameFiles.StateManager import ChessLogic
+from GameFiles.StateManager import ChessLogic, Simulator
 

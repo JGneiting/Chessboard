@@ -43,16 +43,22 @@ class GameInterface(ChessLogic):
     assigned = 0
     move = None
 
-    def __init__(self, error_queue=None, capture_callback=None):
+    def __init__(self, error_queue=None, capture_callback=None, castle_callback=None):
         super().__init__()
 
         self.players = []
         self.error_report = error_queue
         self.capture_call = capture_callback
+        self.castle_call = castle_callback
 
     def capture(self, piece, square):
         self.capture_call(piece)
         super().capture(piece, square)
+
+    def castle(self, king, rook, destination):
+        rook_source = rook.get_location()
+        rook_loc = super().castle(king, rook, destination)
+        self.castle_call(rook_loc, rook_source)
 
     def cleanup(self):
         for player in self.players:
