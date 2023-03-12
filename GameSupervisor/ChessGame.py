@@ -13,7 +13,7 @@ import time
 class ChessGame:
 
     def __init__(self):
-        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 200)
+        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
         self.button_callback = None
         self.upgrade = []
         self.castle_move = []
@@ -32,11 +32,12 @@ class ChessGame:
         self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
         self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
 
-        self.audio.run_midroll()
         self.lights.set_team("White")
+        time.sleep(2)
+        self.audio.run_midroll()
         self.run_game()
 
-    def button_press(self):
+    def button_press(self, state):
         if self.button_callback:
             self.button_callback()
 
