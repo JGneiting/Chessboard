@@ -118,17 +118,46 @@ class ShowRunner(threading.Thread):
 
     def step_pregame(self):
         seed = self.step/7
-        for i in range(self.num_lights):
-            r = 255 * (math.sin(seed / 2)**4)
-            g = 255 * (math.sin((seed + (math.pi/3)))**4)
-            b = 255 * (math.sin((seed + ((2 * math.pi)/3)) / 3)**4)
-            self.lights[i] = (r, g, b)
-            seed += 0.25
+        delta = self.step * 1.05
+        lighted = 0
+        for i in range(round(19 + delta), round(self.num_lights + 19 + delta)):
+            pixel = i % self.num_lights
+
+            if 0 < lighted < 38 or 76 < lighted < 114:
+                r = 255*(lighted % 38 / 38)
+                seed += 0.25
+            else:
+                r = 0
+                seed -= 0.25
+            g = (255 - r) * (math.cos((lighted % 76 + (math.pi / 3)) / 76) ** 4)
+            b = (255 - r) * (math.sin((lighted % 76 + ((2 * math.pi) / 3)) / 76) ** 4)
+            self.lights[pixel] = (r, g, b)
+            lighted += 1
+
         self.step += 1
         self.lights.show()
 
     def step_postgame(self):
-        pass
+        # Black will run first half of lights
+        # White will run second half
+        if self.winner:
+            seed = self.step / 7
+            black_range = range(19, 95)
+            lighted = 0
+            for i in range(19, self.num_lights + 19):
+                pixel = i % self.num_lights
+                if (pixel in black_range and self.winner == "Black") or (self.winner == "White" and pixel not in black_range):
+                    r = 255 * (math.sin(1.05 * seed / 2) ** 4)
+                    g = 255 * (math.sin((seed + (math.pi / 3))) ** 4)
+                    b = 255 * (math.sin((seed + ((2 * math.pi) / 3)) / 3) ** 4)
+                    self.lights[pixel] = (r, g, b)
+                    if lighted < len(black_range) / 2:
+                        seed += 0.25
+                    else:
+                        seed -= 0.25
+                    lighted += 1
+            self.lights.show()
+            self.step += 1
 
     def reset_lights(self):
         pass
@@ -145,10 +174,11 @@ class ShowRunner(threading.Thread):
                 self.step_pregame()
             elif command == "Postgame":
                 self.step = 1
-                self.winner = self.command_queue.get(blocking=True)
+                self.lights.fill((255, 0, 0))
+                self.winner = self.command_queue.get(block=True)
                 command = "Postgame Run"
             elif command == "Postgame Run":
-                self.step_postgame(self.winner)
+                self.step_postgame()
             elif command == "Stop":
                 self.reset_lights()
                 command = 0
