@@ -64,6 +64,7 @@ class ChessGame:
         # TODO: Check if the target piece can be revived from the dead
 
     def play_again(self):
+        self.lights.stop_show()
         self.board.reset()
         self.audio.run_intro()
         self.lights.run_pregame()
@@ -116,6 +117,7 @@ class ChessGame:
             except Checkmate as e:
                 print(e)
                 self.audio.run_outro()
+                self.lights.run_postgame(e.winner)
                 GPIO.remove_event_detect(red_button)
                 channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
                 if channel is None:
@@ -126,6 +128,7 @@ class ChessGame:
             except Stalemate as e:
                 print(e)
                 self.audio.run_stalemate()
+                self.lights.run_postgame(None)
                 GPIO.remove_event_detect(red_button)
                 channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
                 if channel is None:
