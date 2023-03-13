@@ -2,6 +2,7 @@ from NeopixelLights import LightsInterface
 from GameSupervisor.BoardMovementLogic import BoardLogic
 from GameSupervisor.SoundController import SoundController
 from JoyconInterface.Joycon import StandardChessJoycon
+from CPUChessPlayers.DemonstrationBots import *
 from GameFiles.GameInterface import GameInterface
 from GameFiles.ChessErrors import *
 from BoardFiles import cleanup, red_button
@@ -29,8 +30,10 @@ class ChessGame:
         time.sleep(2)
 
         joycon_audio = self.audio.create_ryan()
-        self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
-        self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
+        # self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
+        # self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
+        WhiteDemo(self.backend)
+        BlackDemo(self.backend)
 
         time.sleep(2)
         self.audio.run_midroll()
@@ -84,6 +87,7 @@ class ChessGame:
         run = True
         while run:
             try:
+                self.backend.signal_player()
                 source, dest = self.backend.get_move()
                 time.sleep(.1)
                 piece = str(self.backend.get_square(dest))
