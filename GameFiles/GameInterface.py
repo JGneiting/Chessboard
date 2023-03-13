@@ -92,12 +92,15 @@ class GameInterface(ChessLogic):
         else:
             raise PlayerError
 
-    def next_player(self):
-        super().next_player()
+    def signal_player(self):
         for player in self.players:
             if player.color == self.turn:
                 print(f"It is {self.turn}'s turn")
                 player.my_turn()
+
+    def next_player(self):
+        super().next_player()
+        # self.signal_player()
 
     def move_piece(self, source, dest):
         try:

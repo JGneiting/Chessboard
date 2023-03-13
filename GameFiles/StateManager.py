@@ -137,14 +137,14 @@ class ChessLogic(InternalBoard):
             move_set = occupant.get_possible_moves()
             if move_set is not None and dest in move_set:
                 capture = self.get_square(dest)
-                if str(capture) == "GhostPawn":
+                if str(capture) == "GhostPawn" and str(occupant) == "Pawn":
                     capture = capture.get_linked_pawn()
                     self.set_square(capture.get_location(), None)
                 for ghost in self.ghosts:
                     self.set_square(ghost.get_location(), None)
                     del ghost
                 self.ghosts = []
-                if capture is not None:
+                if capture is not None and str(capture) != "GhostPawn":
                     capture.kill()
                     self.capture(capture, dest)
                 if str(occupant) == "Pawn":

@@ -5,7 +5,7 @@ from GameFiles.ChessPieces import *
 
 
 class PawnTests(unittest.TestCase):
-    def test_en_pasants(self):
+    def test_en_passants(self):
         board = TestBoard()
         pawnW = board.create_piece("A2", "Pawn")
         pawn = board.create_piece("B4", "Pawn", "Black")
@@ -15,6 +15,15 @@ class PawnTests(unittest.TestCase):
         moves = pawn.get_possible_moves()
         self.assertIn("A3", moves)
         self.assertTrue(pawnW.dead)
+
+        board = TestBoard()
+        pawnW = board.create_piece("A2", "Pawn")
+        bishop = board.create_piece("B4", "Bishop", "Black")
+
+        board.move_piece("A2", "A4")
+        board.move_piece("B4", "A3")
+
+        self.assertFalse(pawnW.dead)
 
     def test_invalid_team(self):
         board = TestBoard(True)
