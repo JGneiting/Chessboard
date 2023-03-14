@@ -61,19 +61,26 @@ void MotorAxis::setDirection(stepDirection direction)
 
 void MotorAxis::adjustDelay()
 {
-  int accel = 1;
-  if (abs(targetSteps - currentSteps) < (naturalDelay - currentDelay)*accel*7 && final)
+  if (currentDelay < 2*naturalDelay)  
   {
-    // We need to decelerate
-    currentDelay += accel;
-  }  
-  else if (targetDelay < currentDelay)
-  {
-    currentDelay -= accel;
+    int accel = 2;
+    if (abs(targetSteps - currentSteps) < (naturalDelay - currentDelay)*4/accel && final)
+    {
+      // We need to decelerate
+      currentDelay += accel;
+    }  
+    else if (targetDelay < currentDelay)
+    {
+      currentDelay -= accel;
+    }
+    else if (targetDelay > currentDelay)
+    {
+      currentDelay += accel;
+    }
   }
-  else if (targetDelay > currentDelay)
+  else
   {
-    currentDelay += targetDelay;
+    currentDelay = targetDelay;
   }
 }
 
@@ -94,7 +101,7 @@ bool MotorAxis::step()
     stepState = !stepState;
     digitalWrite(stepPin, stepState);
     lastStep = micros();
-    if (currentSteps % 7 == 0 && state == STEPPING)
+    if (currentSteps % 4 == 0 && state == STEPPING)
       adjustDelay();
     return true;
   }
