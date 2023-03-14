@@ -256,7 +256,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
 
     def joycon_button_event(self, button, state):
         # print(f"{button}: {state}")
-        if self.board is not None:
+        if self.board is not None and self.active:
             if self.query_my_turn() or self.upgrading:
                 if (button == "zl" or button == "zr") and state:
                     self.recalibrate()
@@ -274,7 +274,8 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
             if y > 0:
                 theta *= -1
                 theta += 360
-            self.state_function("Joystick", theta)
+            if self.active():
+                self.state_function("Joystick", theta)
         except ValueError:
             pass
 

@@ -12,7 +12,11 @@ class Player:
         self.inverted = self.color == "Black"
         self.upgrading = False
         self.selection = None
+        self.active = True
         print(self.color)
+
+    def set_active(self, active):
+        self.active = active
 
     def my_turn(self):
         pass
@@ -62,6 +66,12 @@ class GameInterface(ChessLogic):
         self.capture_call = capture_callback
         self.castle_call = castle_callback
         self.upgrade_call = upgrade_callback
+        self.active = True
+
+    def set_active(self, active):
+        self.active = active
+        for player in self.players:
+            player.set_active(active)
 
     def get_active_player(self):
         index = self.team_order.index(self.turn)
