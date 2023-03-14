@@ -19,6 +19,8 @@ void loop() {
     int commandDelim;
     String commandString = Serial.readStringUntil('\n');
     // Serial.println(commandString);
+    xAxis.setFirst();
+    yAxis.setFirst();
     do
     {
     commandDelim = commandString.indexOf('|');
@@ -40,6 +42,11 @@ void loop() {
       float yPercent;
       float xDelay;
       float yDelay;
+      if (commandDelim < 0)
+      {
+        xAxis.setFinal();
+        yAxis.setFinal();
+      }
       String arguments = line.substring(delim+1);
       delim = arguments.indexOf(' ');
       xPercent = atof(arguments.substring(0, delim).c_str());
