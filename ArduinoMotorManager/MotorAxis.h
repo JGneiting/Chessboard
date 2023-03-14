@@ -17,13 +17,17 @@ public:
   void moveRelative(float percent, unsigned long delay=0);
   bool getBusy();
   void update();
+  void setFinal();
+  void setFirst();
 private:
   long totalSteps;
   long currentSteps;
   long targetSteps;
   unsigned long lastStep;
+  unsigned long naturalDelay;
   unsigned long minDelay;
   unsigned long targetDelay;
+  unsigned long currentDelay;
 
   int enablePin;
   int directionPin;
@@ -39,8 +43,10 @@ private:
   axisState state;
   stepDirection axisDirection;
   bool stepState;
+  bool final;
 
   void move(); 
+  void adjustDelay();
   void setDirection(stepDirection direction);
   bool step();
 };
