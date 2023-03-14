@@ -64,10 +64,12 @@ class StalemateMusic(StandardChessBackground):
 
 class ChessSFX(SoundChannel):
     channel = 4
-    sound_directory = "SoundPlayer/GameSounds/SFX"
+    loc = "SoundPlayer/GameSounds/SFX"
 
     def __init__(self, sound_interface):
         super().__init__(sound_interface, self.channel)
+
+        self.add_sound("Ready", f"{self.loc}/ReadyBeep.wav")
 
 
 class Ryan(SoundChannel):

@@ -23,7 +23,7 @@ class Board:
         self.overshoot = .0065
         self.rail_compensate = .0015
         self.return_attempts = []
-        self.magnet_strength = 45
+        self.magnet_strength = 100
 
         self.capture_manager = SlotManager(self, self.magnet)
 
@@ -51,10 +51,10 @@ class Board:
         location_abs = self.convert_square_to_absolute(location)
         corner = f"{home[0]}{location[1]}"
         delta_x = 1
-        if home[1] > location[1]:
+        if home[0] > location[0]:
             delta_x = -1
         delta_y = 1
-        if home[0] > location[0]:
+        if home[1] > location[1]:
             delta_y = -1
 
         sq1 = self.convert_square_to_absolute("B3")
@@ -72,7 +72,7 @@ class Board:
         self.axis.synchronized_move(*first_intermediate)
         self.axis.synchronized_move(*hybrid)
         self.axis.synchronized_move(*last_intermediate)
-        self.move_to_square(home, 1, True, True)
+        self.move_to_square(home, 1, False, True)
         self.magnet.pulse(self.magnet_strength)
         sleep(.05)
         self.axis.write_queue()
@@ -89,7 +89,7 @@ class Board:
 
     def active_move(self, square, time):
         self.magnet.activate()
-        self.move_to_square(square, time, compensate=True, active=True)
+        self.move_to_square(square, time, compensate=False, active=True)
         # self.move_to_square(square, .25)
         self.axis.write_queue()
         self.magnet.pulse(self.magnet_strength)
@@ -142,7 +142,7 @@ class Board:
         self.axis.synchronized_move(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
         # self.magnet.set_duty_cycle(100)
-        self.move_to_square(dest, time/4, compensate=True, active=True)
+        self.move_to_square(dest, time/4, compensate=False, active=True)
         self.axis.write_queue()
         self.magnet.deactivate()
 

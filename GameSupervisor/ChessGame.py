@@ -18,9 +18,9 @@ class ChessGame:
         self.button_callback = None
         self.upgrade = []
         self.castle_move = []
+        self.backends = {}
         self.moves_since_check = 10
         self.errors = Queue()
-        self.backend = GameInterface(self.errors, self.capture, self.castle, self.upgrade_pawn)
         self.lights = LightsInterface()
         self.audio = SoundController()
         self.lights.run_pregame()
@@ -30,10 +30,16 @@ class ChessGame:
         time.sleep(2)
 
         joycon_audio = self.audio.create_ryan()
-        # self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
-        # self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
-        WhiteDemo(self.backend)
-        BlackDemo(self.backend)
+        self.backends["Joycon"] = self.create_game_interface()
+        self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
+        self.joycon_l = StandardChessJoycon("LEFT", self.backends["Joycon"], self.lights, joycon_audio)
+
+        self.backends["Demo"] = self.create_game_interface()
+        WhiteDemo(self.backends["Demo"])
+        BlackDemo(self.backends["Demo"])
+        self.backends["Demo"].set_active(False)
+
+        self.backend = self.backends["Joycon"]
 
         time.sleep(2)
         self.audio.run_midroll()
@@ -41,6 +47,23 @@ class ChessGame:
         self.lights.stop_show()
         self.lights.set_team("White")
         self.run_game()
+
+    def switch_backend(self, backend_name):
+        for name, backend in self.backends.items():
+            if name == backend_name:
+                self.backend = backend
+                backend.set_active(True)
+            else:
+                backend.set_active(False)
+
+    def toggle_demo(self):
+        if self.backends["Demo"].active:
+            self.switch_backend("Joycon")
+        else:
+            self.switch_backend("Demo")
+
+    def create_game_interface(self):
+        return GameInterface(self.errors, self.capture, self.castle, self.upgrade_pawn)
 
     def button_press(self, state):
         if self.button_callback:
@@ -50,9 +73,13 @@ class ChessGame:
         # Must hold button for 2 seconds to reset board
         time.sleep(2)
         if not GPIO.input(red_button):
+            # Holding it 2 more will switch the backend
             self.button_callback = None
             self.audio.stop_midroll()
             self.play_again()
+            time.sleep(2)
+            if not GPIO.input(red_button):
+                self.toggle_demo()
 
     def capture(self, piece):
         self.board.capture(piece)

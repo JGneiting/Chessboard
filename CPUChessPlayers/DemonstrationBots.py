@@ -12,6 +12,7 @@ class Demo(Player):
         source, dest = self.move_list[self.current_move]
         self.make_move(source, dest)
         self.current_move += 1
+        self.current_move %= len(self.move_list)
 
 
 class WhiteDemo(Demo):
