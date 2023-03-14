@@ -1,3 +1,6 @@
+from queue import Queue
+import threading
+import random
 import board
 import neopixel
 import math
@@ -103,6 +106,85 @@ class BlackSideLights(PlayerSide):
     corners = [(29, 47), (67, 85)]
 
 
+class ShowRunner(threading.Thread):
+    num_lights = 152
+
+    def __init__(self, commands, lights):
+        super().__init__(name="ShowRunner")
+        self.command_queue = commands
+        self.lights = lights
+        self.step = 1
+        self.winner = None
+
+    def step_pregame(self):
+        seed = self.step/7
+        delta = self.step * 1.05
+        lighted = 0
+        for i in range(round(19 + delta), round(self.num_lights + 19 + delta)):
+            pixel = i % self.num_lights
+
+            if 0 < lighted < 38 or 76 < lighted < 114:
+                r = 255*(lighted % 38 / 38)
+                seed += 0.25
+            else:
+                r = 0
+                seed -= 0.25
+            g = (255 - r) * (math.cos((lighted % 76 + (math.pi / 3)) / 76) ** 4)
+            b = (255 - r) * (math.sin((lighted % 76 + ((2 * math.pi) / 3)) / 76) ** 4)
+            self.lights[pixel] = (r, g, b)
+            lighted += 1
+
+        self.step += 1
+        self.lights.show()
+
+    def step_postgame(self):
+        # Black will run first half of lights
+        # White will run second half
+        if self.winner:
+            seed = self.step / 7
+            black_range = range(19, 95)
+            lighted = 0
+            for i in range(19, self.num_lights + 19):
+                pixel = i % self.num_lights
+                if (pixel in black_range and self.winner == "Black") or (self.winner == "White" and pixel not in black_range):
+                    r = 255 * (math.sin(1.05 * seed / 2) ** 4)
+                    g = 255 * (math.sin((seed + (math.pi / 3))) ** 4)
+                    b = 255 * (math.sin((seed + ((2 * math.pi) / 3)) / 3) ** 4)
+                    self.lights[pixel] = (r, g, b)
+                    if lighted < len(black_range) / 2:
+                        seed += 0.25
+                    else:
+                        seed -= 0.25
+                    lighted += 1
+            self.lights.show()
+            self.step += 1
+
+    def reset_lights(self):
+        pass
+
+    def run(self):
+        command = 0
+        while command != -1:
+            if not self.command_queue.empty():
+                command = self.command_queue.get()
+            if command == "Pregame":
+                self.step = 1
+                command = "Pregame Run"
+            elif command == "Pregame Run":
+                self.step_pregame()
+            elif command == "Postgame":
+                self.step = 1
+                self.lights.fill((255, 0, 0))
+                self.winner = self.command_queue.get(block=True)
+                command = "Postgame Run"
+            elif command == "Postgame Run":
+                self.step_postgame()
+            elif command == "Stop":
+                self.reset_lights()
+                command = 0
+            time.sleep(0.01)
+
+
 class BoardLights:
     num_pixels = 152
     base_color = (58, 6, 61)
@@ -114,17 +196,24 @@ class BoardLights:
         self.corners = []  # type: list[PlayerSide]
         self.slots = [None, None]
         self.stop = False
+        self.show_commands = Queue()
 
         self.segments.append(SegmentLeft(38, False))
         self.segments.append(SegmentUpper(38, False))
         self.segments.append(SegmentRight(38, True))
         self.segments.append(SegmentLower(38, True))
+        self.show = ShowRunner(self.show_commands, self.lights)
 
         self.corners.append(WhiteSideLights(self.lights, (255, 0, 0), self.base_color))
         self.corners.append(BlackSideLights(self.lights, (0, 0, 255), self.base_color))
 
         self.lights.fill(self.base_color)
         self.flush()
+        self.show.start()
+
+    def cleanup(self):
+        self.show_commands.put(-1)
+        self.show.join()
 
     def light_ranges(self, ranges, color):
         for start, end in ranges:
@@ -206,5 +295,12 @@ class BoardLights:
             self.lights[i] = color
 
     def run_pregame(self):
-        # TODO: Create a pregame show of lights for the homing process
-        pass
+        self.show_commands.put("Pregame")
+
+    def stop_show(self):
+        self.show_commands.put("Stop")
+        self.lights.fill(self.base_color)
+
+    def run_postgame(self, team):
+        self.show_commands.put("Postgame")
+        self.show_commands.put(team)

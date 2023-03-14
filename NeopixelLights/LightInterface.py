@@ -20,6 +20,11 @@ class ThreadedLights(threading.Thread):
             command = self.queue.get(block=True)
             if command == "Pregame":
                 self.lights.run_pregame()
+            elif command == "Postgame":
+                winner = self.queue.get(block=True)
+                self.lights.run_postgame(winner)
+            elif command == "Stop":
+                self.lights.stop_show()
             elif command == "Select":
                 square = self.queue.get(block=True)
                 slot = self.queue.get(block=True)
@@ -33,6 +38,7 @@ class ThreadedLights(threading.Thread):
                 self.lights.indicate_move(source, dest)
 
         print("Lights Exiting")
+        self.lights.cleanup()
 
 
 class LightsInterface:
@@ -49,6 +55,13 @@ class LightsInterface:
 
     def run_pregame(self):
         self.commands.put("Pregame")
+
+    def run_postgame(self, winner):
+        self.commands.put("Postgame")
+        self.commands.put(winner)
+
+    def stop_show(self):
+        self.commands.put("Stop")
 
     def select_square(self, square, slot):
         self.commands.put("Select")

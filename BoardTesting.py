@@ -14,11 +14,13 @@ i = 0
 teams = ["White", "Black"]
 while run:
     source = input("Source: ")
-    if (i/2) % 2 == 0:
-        piece = Pawn(source, source, teams[i%2], None)
-    else:
-        piece = Rook(source, source, teams[i%2], None)
-    board.capture(piece)
+    dest = input("Dest: ")
+    # if (i/2) % 2 == 0:
+    #     piece = Pawn(source, source, teams[i%2], None)
+    # else:
+    #     piece = Rook(source, source, teams[i%2], None)
+    # board.capture(piece)
+    board.move_piece(source, dest, 1)
     run = "n" != input("Continue? (y/n): ")
     i += 1
 
