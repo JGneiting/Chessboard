@@ -19,6 +19,7 @@ class Check(Exception):
 class Checkmate(Exception):
 
     def __init__(self, winner):
+        self.winner = winner
         super().__init__(f"Checkmate! {winner} wins!")
 
 

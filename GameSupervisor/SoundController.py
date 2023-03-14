@@ -1,13 +1,14 @@
 from SoundPlayer.ChessSounds import *
 from SoundPlayer.SoundManager import SoundInterface
+import time
 import pygame
 
 
 class SoundController:
 
     def __init__(self):
-        pygame.mixer.init(buffer=4096)
-        pygame.init()
+        pygame.mixer.init(buffer=4096, channels=10, size=-16)
+        # pygame.init()
 
         self.interface = SoundInterface()
         self.intro_track = IntroMusic(self.interface)
@@ -16,6 +17,8 @@ class SoundController:
         self.check_track = CheckMusic(self.interface)
         self.stalemate_track = StalemateMusic(self.interface)
 
+    def create_ryan(self):
+        return Ryan(self.interface)
 
     def cleanup(self):
         self.interface.cleanup()
@@ -26,9 +29,12 @@ class SoundController:
         self.intro_track.subscribe()
 
     def run_midroll(self):
-        self.midroll_track.play_next()
-        self.intro_track.stop()
+        # self.midroll_track.play_next()
         self.midroll_track.subscribe()
+        self.intro_track.stop()
+
+    def stop_midroll(self):
+        self.midroll_track.stop()
 
     def run_outro(self):
         self.outro_track.play_next()
@@ -45,5 +51,11 @@ class SoundController:
         self.midroll_track.stop()
         self.check_track.stop()
         self.stalemate_track.subscribe()
+
+    def pause_midroll(self):
+        self.midroll_track.pause()
+
+    def unpause_midroll(self):
+        self.midroll_track.unpause()
 
 

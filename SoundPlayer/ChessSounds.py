@@ -63,8 +63,22 @@ class StalemateMusic(StandardChessBackground):
 
 
 class ChessSFX(SoundChannel):
+    channel = 4
+    sound_directory = "SoundPlayer/GameSounds/SFX"
 
     def __init__(self, sound_interface):
-        super().__init__(sound_interface, 1)
+        super().__init__(sound_interface, self.channel)
 
 
+class Ryan(SoundChannel):
+    channel = 5
+    loc = "SoundPlayer/GameSounds/SFX/Ryan"
+
+    def __init__(self, sound_interface):
+        super().__init__(sound_interface, self.channel)
+
+        self.add_sound("Bishop", f"{self.loc}/Bishop Selection.mp3")
+        self.add_sound("Knight", f"{self.loc}/Knight Selection.mp3")
+        self.add_sound("Queen", f"{self.loc}/Queen Selection.mp3")
+        self.add_sound("Rook", f"{self.loc}/Rook Selection.mp3")
+        self.add_sound("Instructions", f"{self.loc}/Upgrade Instructions.mp3")

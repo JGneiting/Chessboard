@@ -2,6 +2,7 @@ from NeopixelLights import LightsInterface
 from GameSupervisor.BoardMovementLogic import BoardLogic
 from GameSupervisor.SoundController import SoundController
 from JoyconInterface.Joycon import StandardChessJoycon
+from CPUChessPlayers.DemonstrationBots import *
 from GameFiles.GameInterface import GameInterface
 from GameFiles.ChessErrors import *
 from BoardFiles import cleanup, red_button
@@ -13,12 +14,13 @@ import time
 class ChessGame:
 
     def __init__(self):
-        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 200)
+        GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
         self.button_callback = None
+        self.upgrade = []
         self.castle_move = []
         self.moves_since_check = 10
         self.errors = Queue()
-        self.backend = GameInterface(self.errors, self.capture, self.castle)
+        self.backend = GameInterface(self.errors, self.capture, self.castle, self.upgrade_pawn)
         self.lights = LightsInterface()
         self.audio = SoundController()
         self.lights.run_pregame()
@@ -27,16 +29,30 @@ class ChessGame:
 
         time.sleep(2)
 
-        self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights)
-        self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights)
+        joycon_audio = self.audio.create_ryan()
+        # self.joycon_r = StandardChessJoycon("RIGHT", self.backend, self.lights, joycon_audio)
+        # self.joycon_l = StandardChessJoycon("LEFT", self.backend, self.lights, joycon_audio)
+        WhiteDemo(self.backend)
+        BlackDemo(self.backend)
 
+        time.sleep(2)
         self.audio.run_midroll()
+        self.button_callback = self.reset_game
+        self.lights.stop_show()
         self.lights.set_team("White")
         self.run_game()
 
-    def button_press(self):
+    def button_press(self, state):
         if self.button_callback:
             self.button_callback()
+
+    def reset_game(self):
+        # Must hold button for 2 seconds to reset board
+        time.sleep(2)
+        if not GPIO.input(red_button):
+            self.button_callback = None
+            self.audio.stop_midroll()
+            self.play_again()
 
     def capture(self, piece):
         self.board.capture(piece)
@@ -44,9 +60,17 @@ class ChessGame:
     def castle(self, source, dest):
         self.castle_move = [source, dest]
 
+    def upgrade_pawn(self, pawn, player):
+        self.audio.pause_midroll()
+        target = self.backend.wait_for_upgrade(pawn, player)
+        self.audio.unpause_midroll()
+        # TODO: Check if the target piece can be revived from the dead
+
     def play_again(self):
+        self.lights.stop_show()
         self.board.reset()
         self.audio.run_intro()
+        self.lights.run_pregame()
         remaining_pieces = self.backend.get_team_pieces("ALL")
         # We need to move living pieces back to their starting square
         for piece in remaining_pieces:
@@ -54,13 +78,16 @@ class ChessGame:
         self.backend.reset_board()
         self.board.return_captured()
         self.backend.turn = "White"
+        self.lights.stop_show()
         self.lights.set_team("White")
         self.audio.run_midroll()
+        self.button_callback = self.reset_game
 
     def run_game(self):
         run = True
         while run:
             try:
+                self.backend.signal_player()
                 source, dest = self.backend.get_move()
                 time.sleep(.1)
                 piece = str(self.backend.get_square(dest))
@@ -83,6 +110,8 @@ class ChessGame:
                 if self.castle_move:
                     self.board.move_intermediate(*self.castle_move)
                     self.castle_move = []
+                if self.upgrade and False:
+                    self.backend.wait_for_upgrade(self.upgrade[0], self.upgrade[1])
             except TurnError as e:
                 # TODO: Play light sequence to assert whose turn it is
                 print(e)
@@ -92,6 +121,7 @@ class ChessGame:
             except Checkmate as e:
                 print(e)
                 self.audio.run_outro()
+                self.lights.run_postgame(e.winner)
                 GPIO.remove_event_detect(red_button)
                 channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
                 if channel is None:
@@ -102,6 +132,7 @@ class ChessGame:
             except Stalemate as e:
                 print(e)
                 self.audio.run_stalemate()
+                self.lights.run_postgame(None)
                 GPIO.remove_event_detect(red_button)
                 channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
                 if channel is None:

@@ -1,11 +1,11 @@
 import unittest
 from GameFiles.UnitTests import TestBoard
 from GameFiles.ChessErrors import PawnUpgrade, TeamError
-from GameFiles.ChessPieces import Piece
+from GameFiles.ChessPieces import *
 
 
 class PawnTests(unittest.TestCase):
-    def test_en_pasants(self):
+    def test_en_passants(self):
         board = TestBoard()
         pawnW = board.create_piece("A2", "Pawn")
         pawn = board.create_piece("B4", "Pawn", "Black")
@@ -15,6 +15,15 @@ class PawnTests(unittest.TestCase):
         moves = pawn.get_possible_moves()
         self.assertIn("A3", moves)
         self.assertTrue(pawnW.dead)
+
+        board = TestBoard()
+        pawnW = board.create_piece("A2", "Pawn")
+        bishop = board.create_piece("B4", "Bishop", "Black")
+
+        board.move_piece("A2", "A4")
+        board.move_piece("B4", "A3")
+
+        self.assertFalse(pawnW.dead)
 
     def test_invalid_team(self):
         board = TestBoard(True)
@@ -300,3 +309,29 @@ class TestKing(unittest.TestCase):
         moves = king.get_possible_moves()
 
         self.assertNotIn("G1", moves)
+
+
+class TestSuperPawn(unittest.TestCase):
+
+    def test_replacement(self):
+        board = TestBoard(single_team=True, upgrade_interface=True)
+        board.set_upgrade_piece("Queen")
+
+        board.create_piece("A7", "Pawn")
+        board.move_piece("A7", "A8")
+
+        piece = board.get_square("A8")
+        self.assertIsInstance(piece, Queen)
+        self.assertEqual("Pawn", piece.piece_type())
+
+    def test_behavior(self):
+        board = TestBoard(single_team=True, upgrade_interface=True)
+        board.set_upgrade_piece("Knight")
+
+        board.create_piece("A7", "Pawn")
+        board.move_piece("A7", "A8")
+
+        piece = board.get_square("A8")
+        moves = piece.get_possible_moves()
+
+        self.assertEqual(["C7", "B6"], moves)
