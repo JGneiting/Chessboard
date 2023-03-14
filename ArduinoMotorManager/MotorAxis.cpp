@@ -6,8 +6,10 @@ MotorAxis::MotorAxis(int direction, int step, int enable, int bumperLeft, int bu
 enablePin(enable), directionPin(direction), stepPin(step), bumpLeftPin(bumperLeft), bumpRightPin(bumperRight)
 {
 
-  minDelay = 20;
+  minDelay = 30;
+  naturalDelay = 250;
   targetDelay = minDelay;
+  currentDelay = naturalDelay;
   totalSteps = 0;
   currentSteps = 0;
   targetSteps = 0;
@@ -15,6 +17,7 @@ enablePin(enable), directionPin(direction), stepPin(step), bumpLeftPin(bumperLef
   state = IDLE;
   axisDirection = LEFT;
   stepState = false;
+  final = false;
 
   // leftButtonState = digitalRead(bumpLeftPin);
   // rightButtonState = digitalRead(bumpRightPin);
@@ -56,10 +59,28 @@ void MotorAxis::setDirection(stepDirection direction)
   }
 }
 
+void MotorAxis::adjustDelay()
+{
+  int accel = 1;
+  if (abs(targetSteps - currentSteps) < (naturalDelay - currentDelay)*accel*7 && final)
+  {
+    // We need to decelerate
+    currentDelay += accel;
+  }  
+  else if (targetDelay < currentDelay)
+  {
+    currentDelay -= accel;
+  }
+  else if (targetDelay > currentDelay)
+  {
+    currentDelay += targetDelay;
+  }
+}
+
 bool MotorAxis::step()
 {
   // Check to see if the proper time delta has passed
-  if (micros() - lastStep >= targetDelay)
+  if (micros() - lastStep >= currentDelay)
   {
     // We need to pulse the step pin, then change our internal step counter in the correct direction
     if (axisDirection == LEFT)
@@ -73,6 +94,8 @@ bool MotorAxis::step()
     stepState = !stepState;
     digitalWrite(stepPin, stepState);
     lastStep = micros();
+    if (currentSteps % 7 == 0 && state == STEPPING)
+      adjustDelay();
     return true;
   }
   return false;
@@ -86,6 +109,7 @@ void MotorAxis::homeAxis()
     setDirection(LEFT);
     state = HOMING;
     targetDelay = 200;
+    currentDelay = targetDelay;
   }
   else if (axisDirection == LEFT)
   {
@@ -143,7 +167,19 @@ void MotorAxis::moveRelative(float percent, unsigned long delay=0)
     }
  
     state = STEPPING;
+    // currentDelay = naturalDelay;
   }
+}
+
+void MotorAxis::setFinal()
+{
+  final = true;
+}
+
+void MotorAxis::setFirst()
+{
+  final = false;
+  currentDelay = naturalDelay;
 }
 
 void MotorAxis::move()
