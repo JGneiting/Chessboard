@@ -240,8 +240,8 @@ class SerialAxis:
         self.arduino.setDTR(True)
         sleep(2)
 
-        self.travel_speed = 45
-        self.move_speed = 80
+        self.travel_speed = 55
+        self.move_speed = 85
 
         self.last_position = (100, 100)
         self.cmd_queue = Queue()

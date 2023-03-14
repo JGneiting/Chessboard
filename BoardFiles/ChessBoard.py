@@ -23,6 +23,7 @@ class Board:
         self.overshoot = .0065
         self.rail_compensate = .0015
         self.return_attempts = []
+        self.magnet_strength = 45
 
         self.capture_manager = SlotManager(self, self.magnet)
 
@@ -72,7 +73,7 @@ class Board:
         self.axis.synchronized_move(*hybrid)
         self.axis.synchronized_move(*last_intermediate)
         self.move_to_square(home, 1, True, True)
-        self.magnet.pulse(90)
+        self.magnet.pulse(self.magnet_strength)
         sleep(.05)
         self.axis.write_queue()
         self.magnet.deactivate()
@@ -91,7 +92,7 @@ class Board:
         self.move_to_square(square, time, compensate=True, active=True)
         # self.move_to_square(square, .25)
         self.axis.write_queue()
-        self.magnet.pulse(50)
+        self.magnet.pulse(self.magnet_strength)
         # sleep(.5)
         self.magnet.deactivate()
         # for i in range(2):
@@ -136,7 +137,7 @@ class Board:
             intermediates.append((delta_x2, delta_y))
         self.move_to_square(source, time/4)
         self.axis.write_queue()
-        self.magnet.pulse(90)
+        self.magnet.pulse(self.magnet_strength)
         self.axis.synchronized_move(intermediates[0][0], intermediates[0][1])
         self.axis.synchronized_move(intermediates[1][0], intermediates[1][1])
         self.location = (intermediates[1][0], intermediates[1][1])
