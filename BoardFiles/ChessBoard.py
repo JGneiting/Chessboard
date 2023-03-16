@@ -51,17 +51,17 @@ class Board:
         location_abs = self.convert_square_to_absolute(location)
         corner = f"{home[0]}{location[1]}"
         delta_x = 1
-        if home[0] > location[0]:
+        if home[1] > location[1]:
             delta_x = -1
         delta_y = 1
-        if home[1] > location[1]:
+        if home[0] > location[0]:
             delta_y = -1
 
         sq1 = self.convert_square_to_absolute("B3")
         sq2 = self.convert_square_to_absolute("C4")
         offset = (sq2[0] - (sq2[0] + sq1[0]) / 2, sq1[1] - (sq2[1] + sq1[1]) / 2)
-        first_intermediate = (-1 * delta_x * offset[0] + location_abs[0], delta_y * offset[1] + location_abs[1])
-        last_intermediate = (delta_x * offset[0] + home_abs[0], delta_y * offset[1] + home_abs[1])
+        first_intermediate = (offset[0] + location_abs[0], offset[1] + location_abs[1])
+        last_intermediate = (offset[0] + home_abs[0], offset[1] + home_abs[1])
         hybrid = (first_intermediate[0], last_intermediate[1])
 
         # Move magnet to piece

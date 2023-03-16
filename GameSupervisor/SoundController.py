@@ -16,6 +16,7 @@ class SoundController:
         self.outro_track = OutroMusic(self.interface)
         self.check_track = CheckMusic(self.interface)
         self.stalemate_track = StalemateMusic(self.interface)
+        self.sfx = ChessSFX(self.interface)
 
     def create_ryan(self):
         return Ryan(self.interface)
@@ -58,4 +59,6 @@ class SoundController:
     def unpause_midroll(self):
         self.midroll_track.unpause()
 
-
+    def signal_mode_switch(self):
+        self.sfx.set_song("Ready")
+        self.sfx.play_sound()

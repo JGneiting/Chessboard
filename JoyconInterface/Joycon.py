@@ -274,7 +274,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
             if y > 0:
                 theta *= -1
                 theta += 360
-            if self.active():
+            if self.active:
                 self.state_function("Joystick", theta)
         except ValueError:
             pass
