@@ -11,6 +11,9 @@ class InternalBoard:
         self.ghosts = []
         self.in_check = None
         self.turn = "White"
+        self.fullmoves = 0
+        self.halfmoves = 0
+        self.moves = []
 
         self.initialize_board()
 
@@ -36,6 +39,11 @@ class InternalBoard:
 
     def get_turn(self):
         return self.turn
+
+    def get_last_move(self):
+        if len(self.moves) > 0:
+            return self.moves[-1]
+        return "LOL"
 
     def checked(self, team):
         return self.in_check == team
@@ -101,6 +109,81 @@ class ChessLogic(InternalBoard):
         test_board.move_piece(piece.get_location(), square)
         return not test_board.checked(piece.get_team())
 
+    def generate_fen_string(self):
+        board_fen = ""
+        black_king = None
+        white_king = None
+        # Generate the piece placement. black is lowercase and white is uppercase
+        reverse_order_rows = []
+        for row, i in zip(self.board, range(len(self.board))):
+            row_fen = ""
+            empty = 0
+            for square in row:
+                if square is None or type(square) == GhostPawn:
+                    empty += 1
+                else:
+                    if empty != 0:
+                        row_fen += empty
+                        empty = 0
+                    character = str(square)
+                    if character == "King":
+                        if square.get_team() == "White"":":
+                            white_king = square
+                        else:
+                            black_king = square
+                    if character == "Knight":
+                        character = "N"
+                    character = character[0]
+                    if square.get_team() == "Black":
+                        character = character.lower()
+                    row_fen += character
+            if empty != 0:
+                row_fen += empty
+            reverse_order_rows.append(row_fen)
+
+        reverse_order_rows.reverse()
+        for fen in reverse_order_rows:
+            board_fen += f"{fen}/"
+        board_fen = board_fen[:-1]
+        board_fen += " "
+
+        # Add a character to indicate whose turn it is
+        if self.turn == "White":
+            board_fen += "w "
+        else:
+            board_fen += "b "
+
+        # We need to check if either king can castle
+        white_king.get_possible_moves()
+        black_king.get_possible_moves()
+        castle_fen = ""
+        if white_king.castling_side[0]:
+            castle_fen += "Q"
+        if white_king.castling_side[1]:
+            castle_fen += "K"
+        if black_king.castling_side[0]:
+            castle_fen += "q"
+        if black_king.castling_side[1]:
+            castle_fen += "k"
+        if castle_fen == "":
+            castle_fen = "-"
+        board_fen += f"{castle_fen} "
+
+        # We need to identify any en passant squares
+        if len(self.ghosts) != 0:
+            ghost_fen = ""
+            for ghost in self.ghosts:
+                square = ghost.get_location().lower()
+                ghost_fen += square
+            board_fen += f"{ghost_fen} "
+        else:
+            board_fen += "- "
+
+        # We need to add the number of halfmoves and fullmoves
+        board_fen += f"{self.halfmoves} {self.fullmoves}"
+
+        return board_fen
+
     def castle(self, king, rook, destination):
         # Determine what side the king is coming from
         alpha_key = king.character_swap(destination[0])
@@ -136,6 +219,7 @@ class ChessLogic(InternalBoard):
                 raise TurnError(self.turn)
             move_set = occupant.get_possible_moves()
             if move_set is not None and dest in move_set:
+                self.halfmoves += 1
                 capture = self.get_square(dest)
                 if str(capture) == "GhostPawn" and str(occupant) == "Pawn":
                     capture = capture.get_linked_pawn()
@@ -148,6 +232,7 @@ class ChessLogic(InternalBoard):
                     capture.kill()
                     self.capture(capture, dest)
                 if str(occupant) == "Pawn":
+                    self.halfmoves = 0
                     occupant.remove_double()
                     if abs(int(occupant.get_location()[1]) - int(dest[1])) == 2:
                         passed_square = f"{dest[0]}{int((int(occupant.get_location()[1]) + int(dest[1]))/2)}"
@@ -169,12 +254,15 @@ class ChessLogic(InternalBoard):
                 self.in_check = None
                 occupant.moved = True
                 success = True
+                self.moves.append(f"{source}{dest}".lower())
                 self.run_check_cycle()
                 if str(occupant) == "Pawn" and type(self) != Simulator:
                     try:
                         occupant.check_upgrade()
                     except PawnUpgrade as e:
                         self.get_pawn_upgrade(occupant)
+                if occupant.get_team() == "Black":
+                    self.fullmoves += 1
                 self.next_player()
                 self.run_stalemate_test()
             else:
@@ -182,10 +270,11 @@ class ChessLogic(InternalBoard):
         return success
 
     def run_stalemate_test(self):
-        if len(self.get_team_moves(self.turn, True)) == 0:
+        if len(self.get_team_moves(self.turn, True)) == 0 or self.halfmoves >= 100:
             raise Stalemate()
 
     def capture(self, piece, square):
+        self.halfmoves = 0
         self.captured.append(piece)
 
     def run_check_cycle(self):
