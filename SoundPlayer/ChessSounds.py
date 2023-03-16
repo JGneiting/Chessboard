@@ -69,7 +69,7 @@ class ChessSFX(SoundChannel):
     def __init__(self, sound_interface):
         super().__init__(sound_interface, self.channel)
 
-        self.add_sound("Ready", f"{self.loc}/ReadyBeep.wav")
+        self.add_sound("Ready", f"{self.loc}/ReadyBeep.mp3")
 
 
 class Ryan(SoundChannel):

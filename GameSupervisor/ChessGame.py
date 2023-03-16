@@ -1,8 +1,10 @@
 from NeopixelLights import LightsInterface
 from GameSupervisor.BoardMovementLogic import BoardLogic
 from GameSupervisor.SoundController import SoundController
+from GameSupervisor.SupervisorErrors import *
 from JoyconInterface.Joycon import StandardChessJoycon
 from CPUChessPlayers.DemonstrationBots import *
+from CPUChessPlayers.UCIPlayer import *
 from GameFiles.GameInterface import GameInterface
 from GameFiles.ChessErrors import *
 from BoardFiles import cleanup, red_button
@@ -15,7 +17,7 @@ class ChessGame:
 
     def __init__(self):
         GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
-        self.button_callback = None
+        self.button_callback = self.reset_game
         self.upgrade = []
         self.castle_move = []
         self.backends = {}
@@ -32,7 +34,8 @@ class ChessGame:
         joycon_audio = self.audio.create_ryan()
         self.backends["Joycon"] = self.create_game_interface()
         self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
-        self.joycon_l = StandardChessJoycon("LEFT", self.backends["Joycon"], self.lights, joycon_audio)
+        # self.joycon_l = StandardChessJoycon("LEFT", self.backends["Joycon"], self.lights, joycon_audio)
+        UCIPlayer(self.backends["Joycon"], "/home/pi/leela-chess/build/lczero")
 
         self.backends["Demo"] = self.create_game_interface()
         WhiteDemo(self.backends["Demo"])
@@ -49,12 +52,16 @@ class ChessGame:
         self.run_game()
 
     def switch_backend(self, backend_name):
+        previous = None
         for name, backend in self.backends.items():
+            if backend.active:
+                previous = backend
             if name == backend_name:
                 self.backend = backend
                 backend.set_active(True)
             else:
                 backend.set_active(False)
+        previous.error_report.put(BackendSwitch)
 
     def toggle_demo(self):
         if self.backends["Demo"].active:
@@ -66,6 +73,7 @@ class ChessGame:
         return GameInterface(self.errors, self.capture, self.castle, self.upgrade_pawn)
 
     def button_press(self, state):
+        print("BUTTON PRESSED")
         if self.button_callback:
             self.button_callback()
 
@@ -73,13 +81,16 @@ class ChessGame:
         # Must hold button for 2 seconds to reset board
         time.sleep(2)
         if not GPIO.input(red_button):
+            self.audio.signal_mode_switch()
             # Holding it 2 more will switch the backend
-            self.button_callback = None
-            self.audio.stop_midroll()
-            self.play_again()
+            switch = False
             time.sleep(2)
             if not GPIO.input(red_button):
-                self.toggle_demo()
+                self.audio.signal_mode_switch()
+                switch = True
+            # self.button_callback = None
+            self.audio.stop_midroll()
+            self.play_again(switch)
 
     def capture(self, piece):
         self.board.capture(piece)
@@ -93,7 +104,7 @@ class ChessGame:
         self.audio.unpause_midroll()
         # TODO: Check if the target piece can be revived from the dead
 
-    def play_again(self):
+    def play_again(self, switch=False):
         self.lights.stop_show()
         self.board.reset()
         self.audio.run_intro()
@@ -102,8 +113,10 @@ class ChessGame:
         # We need to move living pieces back to their starting square
         for piece in remaining_pieces:
             self.board.move_home(piece)
-        self.backend.reset_board()
         self.board.return_captured()
+        self.backend.reset_board()
+        if switch:
+            self.toggle_demo()
         self.backend.turn = "White"
         self.lights.stop_show()
         self.lights.set_team("White")
@@ -116,6 +129,8 @@ class ChessGame:
             try:
                 self.backend.signal_player()
                 source, dest = self.backend.get_move()
+                if not self.errors.empty():
+                    raise self.errors.get()
                 time.sleep(.1)
                 piece = str(self.backend.get_square(dest))
                 if piece is "None":
@@ -132,8 +147,6 @@ class ChessGame:
                         self.audio.play_check()
                         self.moves_since_check = 0
                 self.moves_since_check += 1
-                if not self.errors.empty():
-                    raise self.errors.get()
                 if self.castle_move:
                     self.board.move_intermediate(*self.castle_move)
                     self.castle_move = []
@@ -145,7 +158,18 @@ class ChessGame:
             except InvalidMove as e:
                 # TODO: Play light sequence to indicate that move is invalid
                 print(e)
+            except BackendSwitch:
+                pass
             except Checkmate as e:
+                piece = str(self.backend.get_square(dest))
+                if piece is "None":
+                    piece = "Knight"
+                print(f"{piece} ============================")
+                if piece == "Knight":
+                    print("Knight detected")
+                    self.board.move_between(source, dest, 1)
+                else:
+                    self.board.move_piece(source, dest, 1)
                 print(e)
                 self.audio.run_outro()
                 self.lights.run_postgame(e.winner)
@@ -155,7 +179,14 @@ class ChessGame:
                     run = False
                     print("Exiting")
                 else:
+                    time.sleep(2)
+                    switch = False
+                    if not GPIO.input(red_button):
+                        self.audio.signal_mode_switch()
+                        switch = True
                     self.play_again()
+                    GPIO.remove_event_detect(red_button)
+                    GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
             except Stalemate as e:
                 print(e)
                 self.audio.run_stalemate()
@@ -166,7 +197,14 @@ class ChessGame:
                     run = False
                     print("Exiting")
                 else:
-                    self.play_again()
+                    time.sleep(2)
+                    switch = False
+                    if not GPIO.input(red_button):
+                        self.audio.signal_mode_switch()
+                        switch = True
+                    self.play_again(switch)
+                    GPIO.remove_event_detect(red_button)
+                    GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
 
         self.backend.cleanup()
         self.lights.cleanup()

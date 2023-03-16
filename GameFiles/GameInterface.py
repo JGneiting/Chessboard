@@ -133,7 +133,7 @@ class GameInterface(ChessLogic):
         while self.move is None:
             time.sleep(.1)
             if not self.error_report.empty():
-                break
+                return None, None
         self.move_piece(*self.move)
         temp = self.move
         self.move = None

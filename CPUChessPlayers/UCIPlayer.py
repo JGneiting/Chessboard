@@ -9,7 +9,8 @@ class UCIPlayer(Player):
         super().__init__(game_interface)
         self.ponder_move = None
         self.think_time = 3
-        self.player = subprocess.Popen(uci_executable)
+        self.player = subprocess.Popen(uci_executable, cwd="/home/pi/leela-chess/build/", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # self.player = subprocess.run()
         self.send("uci")
         self.wait_for_ready()
 
@@ -30,8 +31,9 @@ class UCIPlayer(Player):
             time.sleep(self.think_time/2)
         else:
             self.update_board_position()
-            self.send("go")
+            self.send("go infinite")
             time.sleep(self.think_time)
+        self.player.stdout.flush()
         output, error = self.send("stop")
         tokens = output.split(' ')
         move = tokens[1]
@@ -40,10 +42,19 @@ class UCIPlayer(Player):
         self.make_move(source, dest)
 
     def send(self, message):
-        output, error = self.player.communicate(input=message)
-        return output.decode("utf-8"), error.decode("utf-8")
+        self.player.stdin.write(f"{message}\n".encode('utf-8'))
+        self.player.stdin.flush()
+        output = self.player.stdout.readline()
+        # error = self.player.stderr.readline()
+        error = None
+        if output is not None:
+            output = output.decode("utf-8")
+        if error is not None:
+            error = error.decode("utf-8")
+        return output, error
 
     def wait_for_ready(self):
         output = None
         while output != "readyok":
             output, error = self.send("isready")
+            output = output.strip()

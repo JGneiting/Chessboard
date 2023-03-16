@@ -123,11 +123,11 @@ class ChessLogic(InternalBoard):
                     empty += 1
                 else:
                     if empty != 0:
-                        row_fen += empty
+                        row_fen += str(empty)
                         empty = 0
                     character = str(square)
                     if character == "King":
-                        if square.get_team() == "White"":":
+                        if square.get_team() == "White":
                             white_king = square
                         else:
                             black_king = square
@@ -138,7 +138,7 @@ class ChessLogic(InternalBoard):
                         character = character.lower()
                     row_fen += character
             if empty != 0:
-                row_fen += empty
+                row_fen += str(empty)
             reverse_order_rows.append(row_fen)
 
         reverse_order_rows.reverse()

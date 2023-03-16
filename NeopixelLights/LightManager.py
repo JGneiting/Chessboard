@@ -110,7 +110,10 @@ class ShowRunner(threading.Thread):
     num_lights = 152
 
     def __init__(self, commands, lights):
-        super().__init__(name="ShowRunner")
+        super().__init__()
+        self.threadID = 7
+        self.name = "Show Runner"
+        self.counter = 7
         self.command_queue = commands
         self.lights = lights
         self.step = 1
