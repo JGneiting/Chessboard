@@ -5,17 +5,17 @@ import time
 
 class UCIPlayer(Player):
 
-    def __init__(self, game_interface, uci_executable):
+    def __init__(self, game_interface, uci_path, uci_executable):
         super().__init__(game_interface)
         self.ponder_move = None
         self.think_time = 3
-        self.player = subprocess.Popen(uci_executable, cwd="/home/pi/leela-chess/build/", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.player = subprocess.Popen(f"{uci_path}/{uci_executable}", cwd=uci_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         # self.player = subprocess.run()
         self.send("uci")
-        self.wait_for_ready()
+        self.wait_for_token("readyok")
 
         self.send("ucinewgame")
-        self.wait_for_ready()
+        self.wait_for_token("readyok")
 
         self.update_board_position()
 
@@ -33,8 +33,10 @@ class UCIPlayer(Player):
             self.update_board_position()
             self.send("go infinite")
             time.sleep(self.think_time)
+        print(self.board.generate_fen_string())
         self.player.stdout.flush()
-        output, error = self.send("stop")
+        self.send("stop")
+        output = self.wait_for_token("bestmove")
         tokens = output.split(' ')
         move = tokens[1]
         source = move[:2].upper()
@@ -53,8 +55,11 @@ class UCIPlayer(Player):
             error = error.decode("utf-8")
         return output, error
 
-    def wait_for_ready(self):
-        output = None
-        while output != "readyok":
+    def wait_for_token(self, token):
+        output_token = None
+        while output_token != token:
             output, error = self.send("isready")
             output = output.strip()
+            output_token = output.split(' ')[0]
+            print(output)
+        return output

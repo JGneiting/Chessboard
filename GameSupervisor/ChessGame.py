@@ -35,7 +35,8 @@ class ChessGame:
         self.backends["Joycon"] = self.create_game_interface()
         self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
         # self.joycon_l = StandardChessJoycon("LEFT", self.backends["Joycon"], self.lights, joycon_audio)
-        UCIPlayer(self.backends["Joycon"], "/home/pi/leela-chess/build/lczero")
+        # UCIPlayer(self.backends["Joycon"], "/home/pi/leela-chess/build/lczero")
+        UCIPlayer(self.backends["Joycon"], "/home/pi/Stockfish-sf_15/src", "stockfish")
 
         self.backends["Demo"] = self.create_game_interface()
         WhiteDemo(self.backends["Demo"])

@@ -205,11 +205,14 @@ class King(Piece):
                 # Condition 3. There are no pieces in the two squares along the indicated direction
                 path_square = f"{self.character_swap(self.character_swap(self.location[0]) + direction)}{loc_num}"
                 destination = f"{self.character_swap(self.character_swap(self.location[0]) + (2*direction))}{loc_num}"
-                if f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}" != rook.get_location():
-                    self.castling_side[0] = True
-                    if not self.board.square_empty(f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}"):
-                        valid = False
-                else:
+                try:
+                    if f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}" != rook.get_location():
+                        self.castling_side[0] = True
+                        if not self.board.square_empty(f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}"):
+                            valid = False
+                    else:
+                        self.castling_side[1] = True
+                except OutOfRange:
                     self.castling_side[1] = True
                 if self.board.square_empty(path_square) and self.board.square_empty(destination):
                     # Condition 4. We are not in check
