@@ -215,7 +215,7 @@ class ChessLogic(InternalBoard):
         success = False
         occupant = self.get_square(source)
         if occupant is not None:
-            if occupant.get_team() != self.turn:
+            if occupant.get_team() != self.turn and type(self) != Simulator:
                 raise TurnError(self.turn)
             move_set = occupant.get_possible_moves()
             if move_set is not None and dest in move_set:
