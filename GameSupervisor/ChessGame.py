@@ -33,10 +33,16 @@ class ChessGame:
 
         joycon_audio = self.audio.create_ryan()
         self.backends["Joycon"] = self.create_game_interface()
-        self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
+
         # self.joycon_l = StandardChessJoycon("LEFT", self.backends["Joycon"], self.lights, joycon_audio)
-        # UCIPlayer(self.backends["Joycon"], "/home/pi/leela-chess/build/lczero")
-        UCIPlayer(self.backends["Joycon"], "/home/pi/Stockfish-sf_15/src", "stockfish")
+
+        # UCIPlayer(self.backends["Joycon"], "/home/pi/Stockfish-sf_15/src", "stockfish")
+        # UCIPlayer(self.backends["Joycon"], "/home/pi/lc0/build/release", "lc0", args=["--weights=/home/pi/Documents/Maia Nets/maia-1100.pb", "--backend=blas"])
+        self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
+        UCIPlayer(self.backends["Joycon"], "/home/pi/lc0/build/release", "lc0", args=["--weights=/home/pi/Documents/Maia Nets/maia-1100.pb", "--backend=blas"])
+
+        # UCIPlayer(self.backends["Joycon"], "/home/pi/Stockfish-sf_15/src", "stockfish")
+        # UCIPlayer(self.backends["Joycon"], "/home/pi/komodo-14/Linux", "komodo-14.1-linux")
 
         self.backends["Demo"] = self.create_game_interface()
         WhiteDemo(self.backends["Demo"])
@@ -97,6 +103,7 @@ class ChessGame:
         self.board.capture(piece)
 
     def castle(self, source, dest):
+        print("Castling")
         self.castle_move = [source, dest]
 
     def upgrade_pawn(self, pawn, player):

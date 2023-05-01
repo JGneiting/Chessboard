@@ -178,6 +178,7 @@ class ShowRunner(threading.Thread):
             elif command == "Postgame":
                 self.step = 1
                 self.lights.fill((255, 0, 0))
+                self.lights.show()
                 self.winner = self.command_queue.get(block=True)
                 command = "Postgame Run"
             elif command == "Postgame Run":

@@ -51,6 +51,9 @@ class Player:
     def cleanup(self):
         pass
 
+    def reset(self):
+        pass
+
 
 class GameInterface(ChessLogic):
     team_order = ["White", "Black"]
@@ -107,6 +110,11 @@ class GameInterface(ChessLogic):
             if player.color == self.turn:
                 print(f"It is {self.turn}'s turn")
                 player.my_turn()
+
+    def reset_board(self):
+        super().reset_board()
+        for player in self.players:
+            player.reset()
 
     def next_player(self):
         super().next_player()

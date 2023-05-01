@@ -192,34 +192,34 @@ class King(Piece):
         for direction in [-1, 1]:
             valid = True
             # Condition 1. The King cannot have moved
-            if self.has_moved():
-                valid = False
-            # Condition 2. The rook in that direction cannot have moved
-            loc_num = int(self.location[1])
-            if direction == -1:
-                loc_alpha = 1
-            else:
-                loc_alpha = 8
-            rook = self.board.get_square(f"{self.character_swap(loc_alpha)}{loc_num}")
-            if str(rook) == "Rook" and not rook.has_moved():
-                # Condition 3. There are no pieces in the two squares along the indicated direction
-                path_square = f"{self.character_swap(self.character_swap(self.location[0]) + direction)}{loc_num}"
-                destination = f"{self.character_swap(self.character_swap(self.location[0]) + (2*direction))}{loc_num}"
-                try:
-                    if f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}" != rook.get_location():
-                        self.castling_side[0] = True
-                        if not self.board.square_empty(f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}"):
-                            valid = False
-                    else:
+            if not self.has_moved():
+                # Condition 2. The rook in that direction cannot have moved
+                loc_num = int(self.location[1])
+                if direction == -1:
+                    loc_alpha = 1
+                else:
+                    loc_alpha = 8
+                rook = self.board.get_square(f"{self.character_swap(loc_alpha)}{loc_num}")
+                if str(rook) == "Rook" and not rook.has_moved():
+                    # Condition 3. There are no pieces in the two squares along the indicated direction
+                    try:
+                        path_square = f"{self.character_swap(self.character_swap(self.location[0]) + direction)}{loc_num}"
+                        destination = f"{self.character_swap(self.character_swap(self.location[0]) + (2*direction))}{loc_num}"
+
+                        if f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}" != rook.get_location():
+                            self.castling_side[0] = True
+                            if not self.board.square_empty(f"{self.character_swap(self.character_swap(self.location[0]) + (3*direction))}{loc_num}"):
+                                valid = False
+                        else:
+                            self.castling_side[1] = True
+                    except OutOfRange:
                         self.castling_side[1] = True
-                except OutOfRange:
-                    self.castling_side[1] = True
-                if self.board.square_empty(path_square) and self.board.square_empty(destination):
-                    # Condition 4. We are not in check
-                    if not self.board.checked(self.team):
-                        # Condition 5. We will not pass through check
-                        if self.board.is_movable(self, path_square) and self.board.is_movable(self, destination) and valid:
-                            moves.append(destination)
+                    if self.board.square_empty(path_square) and self.board.square_empty(destination):
+                        # Condition 4. We are not in check
+                        if not self.board.checked(self.team):
+                            # Condition 5. We will not pass through check
+                            if self.board.is_movable(self, path_square) and self.board.is_movable(self, destination) and valid:
+                                moves.append(destination)
 
         return moves
 
