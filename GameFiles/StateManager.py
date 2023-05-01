@@ -56,6 +56,8 @@ class InternalBoard:
     def reset_board(self):
         self.board = [[None] * 8 for i in range(8)]
         self.initialize_board()
+        self.moves = []
+        self.halfmoves = 0
 
     def get_opposing_team(self, team):
         if team == "White":
@@ -108,6 +110,12 @@ class ChessLogic(InternalBoard):
         test_board = self.create_simulator()
         test_board.move_piece(piece.get_location(), square)
         return not test_board.checked(piece.get_team())
+
+    def generate_move_fen(self):
+        move_fen = "position startpos moves"
+        for move in self.moves:
+            move_fen += f" {move}"
+        return move_fen
 
     def generate_fen_string(self):
         board_fen = ""
