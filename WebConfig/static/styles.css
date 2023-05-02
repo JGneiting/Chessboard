@@ -1,0 +1,205 @@
+.toolbar {
+    background-color: #333333;
+    color: #FFFFFF;
+    padding: 10px;
+}
+
+.main-body {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.left-third {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 33%;
+    background-color: #EEEEEE;
+    padding: 10px;
+}
+
+.middle-third {
+    flex: 0 0 33%;
+    background-color: #CCCCCC;
+    padding: 10px;
+}
+
+.right-third {
+    flex: 0 0 33%;
+    background-color: #999999;
+    padding: 10px;
+}
+
+.sectionW {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-style: inset;
+    border-width: 2px;
+    background-color: #000000;
+}
+
+.sectionB {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-style: inset;
+    border-width: 2px;
+    background-color: #FFF;
+}
+
+.title-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 5px;
+}
+
+.white-title-bar {
+    background-color: #FFFFFF;
+    color: #000000;
+}
+
+.black-title-bar {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+.title-text {
+    flex: 1;
+    font-size: 30px;
+    padding: 5px;
+}
+
+.checkbox-label {
+    margin-left: 10px;
+}
+
+.white-section {
+    background-color: #EEEEEE;
+    color: #000000;
+    padding: 10px;
+}
+
+.black-section {
+    background-color: #444444;
+    color: #FFFFFF;
+    padding: 10px;
+}
+
+.label-right {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.white-text {
+    color: #FFFFFF;
+}
+
+#left-third {
+    background-color: white;
+}
+
+label {
+    padding: 10px;
+}
+
+.engine-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px;
+    background-color: #333;
+    color: white;
+    font-weight: bold;
+}
+
+.engine-header-name {
+    flex: 2;
+    font-size: 20px;
+}
+
+.engine-header-elo {
+    flex: 1;
+}
+
+.engine-header-color {
+    flex: 1;
+}
+
+.engine-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+.engine-entry-name {
+    flex: 2;
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+}
+
+.engine-entry-elo {
+    flex: 1;
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+}
+
+.engine-entry-color {
+    flex: 1;
+}
+
+/* Center and enlarge the title */
+#board-status-title {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+/* Add padding to the right third */
+#right-third {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Enlarge the font of the Joycon labels */
+#joycon-r-label, #joycon-l-label {
+    font-size: 24px;
+}
+
+/* Make the disconnected labels bold and red */
+.disconnected {
+    font-weight: bold;
+    color: red;
+}
+
+/* Center and enlarge the Launch Game button */
+#launch-game-button {
+    display: block;
+    margin: 20px auto;
+    font-size: 24px;
+    padding: 10px 20px;
+}
+
+/* Center the Autoplay checkbox */
+#autoplay-checkbox {
+    display: inline;
+    margin: 5px auto;
+    padding: 5px;
+}
+
+
+.right-third h2 {
+    text-align: center;
+}
+
+.right-third button {
+    margin-top: 10px;
+}

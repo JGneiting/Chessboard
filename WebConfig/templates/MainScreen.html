@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PiChess</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="toolbar">
+    <h1>PiChess Configuration Window</h1>
+</div>
+
+<div class="main-body">
+    <div class="left-third" id="left-third">
+        <div class="sectionW">
+            <div class="title-bar white-title-bar">
+                <div class="title-text">White</div>
+                <label class="checkbox-label"><input type="checkbox" name="white-human" id="white-human-checkbox">Human</label>
+            </div>
+            <div class="white-section" id="whiteSection">
+                <label class="label-right" id="whiteName">Name:</label>
+                <label class="label-right" id="whiteELO">ELO:</label>
+            </div>
+        </div>
+        <div class="sectionB">
+            <div class="title-bar black-title-bar">
+                <div class="title-text">Black</div>
+                <label class="checkbox-label"><input type="checkbox" name="black-human" id="black-human-checkbox">Human</label>
+            </div>
+            <div class="black-section" id="blackSection">
+                <label class="label-right" id="blackName">Name:</label>
+                <label class="label-right white-text" id="blackELO">ELO:</label>
+            </div>
+        </div>
+    </div>
+    <div class="middle-third">
+        <div class="engines-container">
+            {% for engine_file in engine_files %}
+            <div class="engine">
+                <div class="engine-header">
+                    <label class="engine-header-name">{{ engine_file.name }}</label>
+                    <label class="engine-elo">ELO: {{ engine_file.elo }}</label>
+                    <button class="set-color-btn" id="setWhiteBtn" data-engine="{{engine_file.path}}"
+                            data-name="{{engine_file.name}}" data-elo="{{engine_file.elo}}">Set White
+                    </button>
+                    <button class="set-color-btn" id="setBlackBtn" data-engine="{{engine_file.path}}"
+                            data-name="{{engine_file.name}}" data-elo="{{engine_file.elo}}">Set Black
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="right-third">
+        <h2>Board Status</h2>
+        <div class="status-info">
+          <div class="joycon-container">
+            <label for="joycon-r-status">Joycon R Status:</label>
+            <label id="joycon-r-status" class="disconnected">Disconnected</label>
+          </div>
+          <div class="joycon-container">
+            <label for="joycon-l-status">Joycon L Status:</label>
+            <label id="joycon-l-status" class="disconnected">Disconnected</label>
+          </div>
+          <div class="autoplay-container">
+            <label class="checkbox-label"><input type="checkbox" id="autoplay-checkbox" name="autoplay-checkbox"> Autoplay</label>
+          </div>
+          <div class="button-container">
+            <button id="launch-button">Launch Game</button>
+          </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

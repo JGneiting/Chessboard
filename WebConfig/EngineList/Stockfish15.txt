@@ -1,0 +1,3 @@
+Name: Stockfish 15
+ELO: U LOSE
+Path: Engines/stockfish15.py
