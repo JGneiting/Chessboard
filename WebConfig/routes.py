@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request
-
 import WebConfig
 from WebConfig.DataStructures import *
 import os
@@ -19,9 +18,6 @@ def read_engines():
                 engines.append(engine)
 
     return engines
-
-
-app = Flask(__name__)
 
 @app.route('/')
 def index():
@@ -56,6 +52,16 @@ def set_black_human():
     human = request.json['human']
     print(human)
     WebConfig.black.human = human == True
+    return 'OK'
+
+@app.route('/launch_game', methods=["POST"])
+def launch_game():
+    WebConfig.launch_game()
+    return 'OK'
+
+@app.route('/set_autoplay', methods=["POST"])
+def set_autoplay():
+    WebConfig.autoplay = request.json['autoplay'] == True
     return 'OK'
 
 

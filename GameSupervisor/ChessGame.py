@@ -1,3 +1,5 @@
+import os
+import importlib
 from NeopixelLights import LightsInterface
 from GameSupervisor.BoardMovementLogic import BoardLogic
 from GameSupervisor.SoundController import SoundController
@@ -15,7 +17,7 @@ import time
 
 class ChessGame:
 
-    def __init__(self):
+    def __init__(self, white, black, play_callback):
         GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
         self.button_callback = self.reset_game
         self.upgrade = []
@@ -28,18 +30,23 @@ class ChessGame:
         self.lights.run_pregame()
         self.audio.run_intro()
         self.board = BoardLogic()
+        self.play_callback = play_callback
+        self.busy = True
 
         time.sleep(2)
 
         joycon_audio = self.audio.create_ryan()
-        self.backends["Joycon"] = self.create_game_interface()
+        self.backends["Main"] = self.create_game_interface()
+
+        self.set_player("White", white)
+        self.set_player("Black", black)
 
         # self.joycon_l = StandardChessJoycon("LEFT", self.backends["Joycon"], self.lights, joycon_audio)
 
         # UCIPlayer(self.backends["Joycon"], "/home/pi/Stockfish-sf_15/src", "stockfish")
         # UCIPlayer(self.backends["Joycon"], "/home/pi/lc0/build/release", "lc0", args=["--weights=/home/pi/Documents/Maia Nets/maia-1100.pb", "--backend=blas"])
-        self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
-        UCIPlayer(self.backends["Joycon"], "/home/pi/lc0/build/release", "lc0", args=["--weights=/home/pi/Documents/Maia Nets/maia-1100.pb", "--backend=blas"])
+        # self.joycon_r = StandardChessJoycon("RIGHT", self.backends["Joycon"], self.lights, joycon_audio)
+        # UCIPlayer(self.backends["Joycon"], "/home/pi/lc0/build/release", "lc0", args=["--weights=/home/pi/Documents/Maia Nets/maia-1100.pb", "--backend=blas"])
 
         # UCIPlayer(self.backends["Joycon"], "/home/pi/Stockfish-sf_15/src", "stockfish")
         # UCIPlayer(self.backends["Joycon"], "/home/pi/komodo-14/Linux", "komodo-14.1-linux")
@@ -52,11 +59,18 @@ class ChessGame:
         self.backend = self.backends["Joycon"]
 
         time.sleep(2)
-        self.audio.run_midroll()
-        self.button_callback = self.reset_game
-        self.lights.stop_show()
-        self.lights.set_team("White")
-        self.run_game()
+
+    def set_player(self, color, config):
+        if color == "White":
+            index = 0
+        else:
+            index = 1
+
+        if config.human:
+            self.backend["Main"].players[index] = StandardChessJoycon(config.engine, self.backend["Main"], self.lights, self.audio)
+        else:
+            engine = importlib.import_module(f"Engines/{config.engine}")
+            self.backend["Main"].players[index] = engine.create(self.backend["Main"])
 
     def switch_backend(self, backend_name):
         previous = None
@@ -84,10 +98,10 @@ class ChessGame:
         if self.button_callback:
             self.button_callback()
 
-    def reset_game(self):
+    def reset_game(self, force=False):
         # Must hold button for 2 seconds to reset board
         time.sleep(2)
-        if not GPIO.input(red_button):
+        if not GPIO.input(red_button) or force:
             self.audio.signal_mode_switch()
             # Holding it 2 more will switch the backend
             switch = False
@@ -125,14 +139,23 @@ class ChessGame:
         self.backend.reset_board()
         if switch:
             self.toggle_demo()
+
+    def quit(self):
+        self.backend.cleanup()
+        self.lights.cleanup()
+        self.board.cleanup()
+        self.audio.cleanup()
+
+        cleanup()
+
+    def run_game(self):
         self.backend.turn = "White"
         self.lights.stop_show()
         self.lights.set_team("White")
         self.audio.run_midroll()
         self.button_callback = self.reset_game
-
-    def run_game(self):
         run = True
+        self.busy = True
         while run:
             try:
                 self.backend.signal_player()
@@ -181,42 +204,43 @@ class ChessGame:
                 print(e)
                 self.audio.run_outro()
                 self.lights.run_postgame(e.winner)
-                GPIO.remove_event_detect(red_button)
-                channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
-                if channel is None:
-                    run = False
-                    print("Exiting")
-                else:
-                    time.sleep(2)
-                    switch = False
-                    if not GPIO.input(red_button):
-                        self.audio.signal_mode_switch()
-                        switch = True
-                    self.play_again()
-                    GPIO.remove_event_detect(red_button)
-                    GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
+                self.button_callback = self.play_callback
+                run = False
+                # GPIO.remove_event_detect(red_button)
+                # channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
+                # if channel is None:
+                #     run = False
+                #     print("Exiting")
+                # else:
+                #     time.sleep(2)
+                #     switch = False
+                #     if not GPIO.input(red_button):
+                #         self.audio.signal_mode_switch()
+                #         switch = True
+                #     # self.play_again()
+                #     GPIO.remove_event_detect(red_button)
+                #     GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
             except Stalemate as e:
                 print(e)
                 self.audio.run_stalemate()
                 self.lights.run_postgame(None)
-                GPIO.remove_event_detect(red_button)
-                channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
-                if channel is None:
-                    run = False
-                    print("Exiting")
-                else:
-                    time.sleep(2)
-                    switch = False
-                    if not GPIO.input(red_button):
-                        self.audio.signal_mode_switch()
-                        switch = True
-                    self.play_again(switch)
-                    GPIO.remove_event_detect(red_button)
-                    GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
+                self.button_callback = self.play_callback
+                run = False
+                # GPIO.remove_event_detect(red_button)
+                # channel = GPIO.wait_for_edge(red_button, GPIO.FALLING, timeout=150000)
+                # if channel is None:
+                #     run = False
+                #     print("Exiting")
+                # else:
+                #     time.sleep(2)
+                #     switch = False
+                #     if not GPIO.input(red_button):
+                #         self.audio.signal_mode_switch()
+                #         switch = True
+                #     # self.play_again(switch)
+                #     GPIO.remove_event_detect(red_button)
+                #     GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
 
-        self.backend.cleanup()
-        self.lights.cleanup()
-        self.board.cleanup()
-        self.audio.cleanup()
-
-        cleanup()
+        time.sleep(10)
+        self.reset_game(force=True)
+        self.busy = False

@@ -1,7 +1,7 @@
 class PlayerConfig:
-    def __init__(self, human):
-        self.human = human
-        self.engine = None
+    def __init__(self):
+        self.human = False
+        self.engine = "maia1100.py"
 
     def set_engine(self, engine):
         self.engine = engine
