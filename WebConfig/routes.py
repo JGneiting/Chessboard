@@ -19,6 +19,8 @@ def read_engines():
 
     return engines
 
+app = WebConfig.app
+
 @app.route('/')
 def index():
     white_player = WebConfig.white

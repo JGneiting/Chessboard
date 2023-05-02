@@ -1,5 +1,7 @@
 import os
-import importlib
+import importlib.util
+import sys
+
 from NeopixelLights import LightsInterface
 from GameSupervisor.BoardMovementLogic import BoardLogic
 from GameSupervisor.SoundController import SoundController
@@ -56,9 +58,11 @@ class ChessGame:
         BlackDemo(self.backends["Demo"])
         self.backends["Demo"].set_active(False)
 
-        self.backend = self.backends["Joycon"]
+        self.backend = self.backends["Main"]
 
         time.sleep(2)
+
+        self.run_game()
 
     def set_player(self, color, config):
         if color == "White":
@@ -67,10 +71,14 @@ class ChessGame:
             index = 1
 
         if config.human:
-            self.backend["Main"].players[index] = StandardChessJoycon(config.engine, self.backend["Main"], self.lights, self.audio)
+            self.backends["Main"].players[index] = StandardChessJoycon(config.engine, self.backends["Main"], self.lights, self.audio)
         else:
-            engine = importlib.import_module(f"Engines/{config.engine}")
-            self.backend["Main"].players[index] = engine.create(self.backend["Main"])
+            # engine = importlib.import_module(f"{config.engine}.py")
+            spec = importlib.util.spec_from_file_location("engine", f"{config.engine}")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules["engine"] = module
+            spec.loader.exec_module(module)
+            self.backends["Main"].players[index] = module.create(self.backends["Main"])
 
     def switch_backend(self, backend_name):
         previous = None
@@ -86,7 +94,7 @@ class ChessGame:
 
     def toggle_demo(self):
         if self.backends["Demo"].active:
-            self.switch_backend("Joycon")
+            self.switch_backend("Main")
         else:
             self.switch_backend("Demo")
 
@@ -241,6 +249,6 @@ class ChessGame:
                 #     GPIO.remove_event_detect(red_button)
                 #     GPIO.add_event_detect(red_button, GPIO.FALLING, self.button_press, 400)
 
-        time.sleep(10)
-        self.reset_game(force=True)
+        # time.sleep(20)
+        # self.reset_game(force=True)
         self.busy = False

@@ -1,4 +1,10 @@
-from GameSupervisor import create_game
+# from GameSupervisor import create_game
+#
+#
+# create_game()
+
+from WebConfig import main
 
 
-create_game()
+main()
+
