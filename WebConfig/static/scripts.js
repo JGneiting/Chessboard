@@ -9,6 +9,15 @@ const whiteELO = document.getElementById('whiteELO');
 const blackELO = document.getElementById('blackELO');
 const whiteSection = document.getElementById("whiteSection");
 const blackSection = document.getElementById("blackSection");
+const launchBtn = document.getElementById("launch-button");
+const autoplayBox = document.getElementById("autoplay-checkbox");
+
+autoplayBox.addEventListener('change', function() {
+    const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/set_autoplay');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({"autoplay": this.checked}));
+});
 
 // Add checkbutton event listeners
 whiteHuman.addEventListener('change', function() {
@@ -88,4 +97,12 @@ setBlackBtn.forEach(button => {
       xhr.send(JSON.stringify({"engineName": enginePath}));
     }
     });
+});
+
+launchBtn.addEventListener('click', () => {
+  // Send an AJAX request to the Python Flask app
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/launch_game');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({"launch": "True"}));
 });
