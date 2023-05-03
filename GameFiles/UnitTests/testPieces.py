@@ -25,6 +25,15 @@ class PawnTests(unittest.TestCase):
 
         self.assertFalse(pawnW.dead)
 
+    def test_double_block(self):
+        board = TestBoard(True)
+        pawn = board.create_piece("B2", "Pawn")
+        board.create_piece("E1", "King")
+        board.create_piece("A5", "Bishop", "Black")
+
+        moves = pawn.get_possible_moves()
+        self.assertIn("B4", moves)
+
     def test_invalid_team(self):
         board = TestBoard(True)
         with self.assertRaises(TeamError):

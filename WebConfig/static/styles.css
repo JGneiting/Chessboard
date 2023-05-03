@@ -180,6 +180,12 @@ label {
     color: red;
 }
 
+.connected {
+  color: green;
+  font-weight: bold;
+}
+
+
 /* Center and enlarge the Launch Game button */
 #launch-game-button {
     display: block;

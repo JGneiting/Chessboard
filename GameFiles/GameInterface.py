@@ -6,9 +6,9 @@ import time
 
 class Player:
 
-    def __init__(self, game_interface):
+    def __init__(self, game_interface, color):
         self.board = game_interface  # type: GameInterface
-        self.color = game_interface.add_player(self)
+        self.color = game_interface.add_player(self, color)
         self.inverted = self.color == "Black"
         self.upgrading = False
         self.selection = None
@@ -97,13 +97,17 @@ class GameInterface(ChessLogic):
         for player in self.players:
             player.cleanup()
 
-    def add_player(self, interface):
+    def add_player(self, interface, color):
         if self.assigned < 2:
             self.players.append(interface)
             self.assigned += 1
             return self.team_order[self.assigned - 1]
         else:
-            raise PlayerError
+            index = 1
+            if color == "White":
+                index = 0
+            self.players[index] = interface
+            return color
 
     def signal_player(self):
         for player in self.players:
