@@ -34,11 +34,11 @@ class ChessGame:
         self.board = BoardLogic()
         self.play_callback = play_callback
         self.busy = False
-        self.joycon_players = [None, None]
+        self.joycon_players = [None, None]  # type: list[StandardChessJoycon]
 
         time.sleep(2)
 
-        joycon_audio = self.audio.create_ryan()
+        self.joycon_audio = self.audio.create_ryan()
         self.backends["Main"] = self.create_game_interface()
 
         self.set_player("White", white)
@@ -72,13 +72,12 @@ class ChessGame:
             index = 1
 
         if config.human:
-            index = 0
-            if color == "Black":
-                index = 1
             if self.joycon_players[index] is None:
-                self.joycon_players[index] = StandardChessJoycon(config.engine, self.backends["Main"], self.lights, self.audio, color)
+                self.joycon_players[index] = StandardChessJoycon(config.engine, self.backends["Main"], self.lights, self.joycon_audio, color)
             else:
                 self.backends["Main"].players[index] = self.joycon_players[index]
+                self.joycon_players[index].color = color
+                self.joycon_players[index].inverted = color == "Black"
         else:
             # engine = importlib.import_module(f"{config.engine}.py")
             spec = importlib.util.spec_from_file_location("engine", f"{config.engine}")
@@ -154,6 +153,19 @@ class ChessGame:
         self.backend.reset_board()
         if switch:
             self.toggle_demo()
+
+    def joycon_reset(self):
+        for joycon, i in zip(self.joycon_players, range(2)):
+            if joycon is not None:
+                side = joycon.side
+                color = joycon.color
+                ping = joycon == self.backend.get_active_player()
+
+                del joycon
+                self.joycon_players[i] = StandardChessJoycon(side, self.backend, self.lights, self.joycon_audio, color)
+
+                if ping:
+                    self.joycon_players[i].my_turn()
 
     def quit(self):
         self.backend.cleanup()
