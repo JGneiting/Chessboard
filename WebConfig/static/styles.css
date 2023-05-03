@@ -209,3 +209,7 @@ label {
 .right-third button {
     margin-top: 10px;
 }
+
+.status-info {
+    font-size: 25px;
+}

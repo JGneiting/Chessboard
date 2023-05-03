@@ -66,6 +66,11 @@ def set_autoplay():
     WebConfig.autoplay = request.json['autoplay'] == True
     return 'OK'
 
+@app.route('/reset_joycons', methods=["POST"])
+def reset_joycons():
+    # WebConfig.remove_paired_joycons()
+    WebConfig.restart_paired_joycons()
+
 @app.route('/connect-joycons', methods=["POST"])
 def connect_joycons():
     for i in range(2):

@@ -185,6 +185,11 @@ def run_flask_app():
     app.run(host='0.0.0.0')
 
 
+def restart_paired_joycons():
+    if game is not None:
+        game.joycon_reset()
+
+
 def main():
     global new_game
     flask_thread = threading.Thread(target=run_flask_app)

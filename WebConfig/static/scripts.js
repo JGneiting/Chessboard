@@ -11,6 +11,9 @@ const whiteSection = document.getElementById("whiteSection");
 const blackSection = document.getElementById("blackSection");
 const launchBtn = document.getElementById("launch-button");
 const autoplayBox = document.getElementById("autoplay-checkbox");
+const joyconRStatus = document.getElementById('joycon-r-status');
+const joyconLStatus = document.getElementById('joycon-l-status');
+const joyconReset = document.getElementById('reset-joycons')
 
 autoplayBox.addEventListener('change', function() {
     const xhr = new XMLHttpRequest();
@@ -109,6 +112,8 @@ launchBtn.addEventListener('click', () => {
 
 function connectJoycons() {
   // Make AJAX request to Flask server
+  joyconRStatus.innerHTML = "Searching...";
+  joyconLStatus.innerHTML = "Searching...";
   const xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function() {
     if (this.readyState === 4 && this.status === 200) {
@@ -121,9 +126,25 @@ function connectJoycons() {
 }
 
 
+function resetJoycons() {
+//  joyconRStatus.innerHTML = "Restarting...";
+//  joyconLStatus.innerHTML = "Restarting...";
+//  joyconRStatus.classList.remove('connected');
+//  joyconRStatus.classList.add('disconnected');
+//  joyconLStatus.classList.remove('connected');
+//  joyconLStatus.classList.add('disconnected');
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/reset_joycons');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send(JSON.stringify({"reset": "True"}));
+
+  // connectJoycons();
+}
+
+
 function updateStatusLabels(response) {
-  const joyconRStatus = document.getElementById('joycon-r-status');
-  const joyconLStatus = document.getElementById('joycon-l-status');
+
 
   if (response.joyconRConnected) {
     joyconRStatus.innerHTML = 'Connected';
@@ -149,4 +170,5 @@ function updateStatusLabels(response) {
 
 // Add the click event listener to the button
 document.getElementById('connect-joycons').addEventListener('click', connectJoycons);
+joyconReset.addEventListener('click', resetJoycons);
 
