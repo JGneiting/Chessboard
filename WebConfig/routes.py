@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import WebConfig
 from WebConfig.DataStructures import *
 import os
@@ -65,6 +65,17 @@ def launch_game():
 def set_autoplay():
     WebConfig.autoplay = request.json['autoplay'] == True
     return 'OK'
+
+@app.route('/connect-joycons', methods=["POST"])
+def connect_joycons():
+    for i in range(2):
+        WebConfig.connect_joycon()
+    joycon_r_status = WebConfig.right_connected  # Example value
+    joycon_l_status = WebConfig.left_connected  # Example value
+
+    # Return a JSON response with the updated label values
+    return jsonify(joyconRConnected=joycon_r_status, joyconLConnected=joycon_l_status)
+
 
 
 if __name__ == '__main__':

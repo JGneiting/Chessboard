@@ -5,8 +5,8 @@ import time
 
 class UCIPlayer(Player):
 
-    def __init__(self, game_interface, uci_path, uci_executable, args=[]):
-        super().__init__(game_interface)
+    def __init__(self, game_interface, uci_path, uci_executable, color, args=[]):
+        super().__init__(game_interface, color)
         self.ponder_move = None
         self.think_time = 3
         self.target_piece = "Queen"
@@ -54,7 +54,7 @@ class UCIPlayer(Player):
         dest = move[2:].upper()
         if len(dest) == 3:
             # The AI is upgrading a pawn. The last character is the piece to upgrade to
-            selection = dest[2]
+            selection = dest[2].upper()
             dest = dest[:2]
             if selection == "Q":
                 self.target_piece = "Queen"
@@ -64,6 +64,7 @@ class UCIPlayer(Player):
                 self.target_piece = "Knight"
             elif selection == "B":
                 self.target_piece = "Bishop"
+            self.selection = self.target_piece
         self.make_move(source, dest)
 
     def upgrade_pawn(self, pawn):

@@ -33,7 +33,8 @@ class ChessGame:
         self.audio.run_intro()
         self.board = BoardLogic()
         self.play_callback = play_callback
-        self.busy = True
+        self.busy = False
+        self.joycon_players = [None, None]
 
         time.sleep(2)
 
@@ -54,15 +55,15 @@ class ChessGame:
         # UCIPlayer(self.backends["Joycon"], "/home/pi/komodo-14/Linux", "komodo-14.1-linux")
 
         self.backends["Demo"] = self.create_game_interface()
-        WhiteDemo(self.backends["Demo"])
-        BlackDemo(self.backends["Demo"])
+        WhiteDemo(self.backends["Demo"], "white")
+        BlackDemo(self.backends["Demo"], "black")
         self.backends["Demo"].set_active(False)
 
         self.backend = self.backends["Main"]
 
         time.sleep(2)
 
-        self.run_game()
+        # self.run_game()
 
     def set_player(self, color, config):
         if color == "White":
@@ -71,14 +72,20 @@ class ChessGame:
             index = 1
 
         if config.human:
-            self.backends["Main"].players[index] = StandardChessJoycon(config.engine, self.backends["Main"], self.lights, self.audio)
+            index = 0
+            if color == "Black":
+                index = 1
+            if self.joycon_players[index] is None:
+                self.joycon_players[index] = StandardChessJoycon(config.engine, self.backends["Main"], self.lights, self.audio, color)
+            else:
+                self.backends["Main"].players[index] = self.joycon_players[index]
         else:
             # engine = importlib.import_module(f"{config.engine}.py")
             spec = importlib.util.spec_from_file_location("engine", f"{config.engine}")
             module = importlib.util.module_from_spec(spec)
             sys.modules["engine"] = module
             spec.loader.exec_module(module)
-            self.backends["Main"].players[index] = module.create(self.backends["Main"])
+            module.create(self.backends["Main"], color)
 
     def switch_backend(self, backend_name):
         previous = None

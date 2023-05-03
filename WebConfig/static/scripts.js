@@ -106,3 +106,47 @@ launchBtn.addEventListener('click', () => {
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.send(JSON.stringify({"launch": "True"}));
 });
+
+function connectJoycons() {
+  // Make AJAX request to Flask server
+  const xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4 && this.status === 200) {
+      const response = JSON.parse(this.responseText);
+      updateStatusLabels(response);
+    }
+  };
+  xhr.open('POST', '/connect-joycons');
+  xhr.send();
+}
+
+
+function updateStatusLabels(response) {
+  const joyconRStatus = document.getElementById('joycon-r-status');
+  const joyconLStatus = document.getElementById('joycon-l-status');
+
+  if (response.joyconRConnected) {
+    joyconRStatus.innerHTML = 'Connected';
+    joyconRStatus.classList.remove('disconnected');
+    joyconRStatus.classList.add('connected');
+  } else {
+    joyconRStatus.innerHTML = 'Disconnected';
+    joyconRStatus.classList.remove('connected');
+    joyconRStatus.classList.add('disconnected');
+  }
+
+  if (response.joyconLConnected) {
+    joyconLStatus.innerHTML = 'Connected';
+    joyconLStatus.classList.remove('disconnected');
+    joyconLStatus.classList.add('connected');
+  } else {
+    joyconLStatus.innerHTML = 'Disconnected';
+    joyconLStatus.classList.remove('connected');
+    joyconLStatus.classList.add('disconnected');
+  }
+}
+
+
+// Add the click event listener to the button
+document.getElementById('connect-joycons').addEventListener('click', connectJoycons);
+
