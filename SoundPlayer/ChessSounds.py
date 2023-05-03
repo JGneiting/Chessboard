@@ -84,3 +84,7 @@ class Ryan(SoundChannel):
         self.add_sound("Queen", f"{self.loc}/Queen Selection.mp3")
         self.add_sound("Rook", f"{self.loc}/Rook Selection.mp3")
         self.add_sound("Instructions", f"{self.loc}/Upgrade Instructions.mp3")
+        self.add_sound("Bishop Confirm", f"{self.loc}/Bishop Selected.mp3")
+        self.add_sound("Knight Confirm", f"{self.loc}/Knight Selected.mp3")
+        self.add_sound("Queen Confirm", f"{self.loc}/Queen Selected.mp3")
+        self.add_sound("Rood Confirm", f"{self.loc}/Rook Selected.mp3")
