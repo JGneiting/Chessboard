@@ -183,6 +183,7 @@ def assign_joycons():
 
 def run_flask_app():
     app.run(host='0.0.0.0')
+    # app.run(host='chessboard.local')
 
 
 def restart_paired_joycons():

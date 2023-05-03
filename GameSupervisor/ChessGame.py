@@ -137,6 +137,8 @@ class ChessGame:
     def upgrade_pawn(self, pawn, player):
         self.audio.pause_midroll()
         target = self.backend.wait_for_upgrade(pawn, player)
+        target_file = f'{target} Confirm'
+        self.joycon_audio.set_song(target_file)
         self.audio.unpause_midroll()
         # TODO: Check if the target piece can be revived from the dead
 
