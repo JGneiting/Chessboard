@@ -5,7 +5,7 @@ import os
 
 def read_engines():
     engines = []
-    engines_dir = "WebConfig/EngineList"
+    engines_dir = "/root/PycharmProjects/ChessBoard/WebConfig/EngineList"
 
     for filename in os.listdir(engines_dir):
         if filename.endswith(".txt"):
@@ -70,6 +70,17 @@ def set_autoplay():
 def reset_joycons():
     # WebConfig.remove_paired_joycons()
     WebConfig.restart_paired_joycons()
+    return 'OK'
+
+@app.route('/reset_game', methods=["POST"])
+def reset_game():
+    WebConfig.reset_game()
+    return 'OK'
+
+@app.route('/quit_game', methods=["POST"])
+def quit_game():
+    WebConfig.quit()
+    return 'OK'
 
 @app.route('/connect-joycons', methods=["POST"])
 def connect_joycons():

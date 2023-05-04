@@ -80,7 +80,7 @@ class ChessGame:
                 self.joycon_players[index].inverted = color == "Black"
         else:
             # engine = importlib.import_module(f"{config.engine}.py")
-            spec = importlib.util.spec_from_file_location("engine", f"{config.engine}")
+            spec = importlib.util.spec_from_file_location("engine", f"/root/PycharmProjects/ChessBoard/{config.engine}")
             module = importlib.util.module_from_spec(spec)
             sys.modules["engine"] = module
             spec.loader.exec_module(module)
@@ -139,6 +139,8 @@ class ChessGame:
         target = self.backend.wait_for_upgrade(pawn, player)
         target_file = f'{target} Confirm'
         self.joycon_audio.set_song(target_file)
+        self.joycon_audio.play_sound()
+        time.sleep(1)
         self.audio.unpause_midroll()
         # TODO: Check if the target piece can be revived from the dead
 
@@ -163,6 +165,7 @@ class ChessGame:
                 color = joycon.color
                 ping = joycon == self.backend.get_active_player()
 
+                joycon.cleanup()
                 del joycon
                 self.joycon_players[i] = StandardChessJoycon(side, self.backend, self.lights, self.joycon_audio, color)
 

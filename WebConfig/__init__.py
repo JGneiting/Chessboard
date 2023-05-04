@@ -4,7 +4,7 @@ from flask import Flask
 from WebConfig.DataStructures import PlayerConfig
 import os
 import time
-import subprocess
+import signal
 import pexpect
 import re
 
@@ -184,6 +184,19 @@ def assign_joycons():
 def run_flask_app():
     app.run(host='0.0.0.0')
     # app.run(host='chessboard.local')
+
+
+def quit():
+    if game is not None:
+        game.quit()
+    os.kill(os.getpid(), signal.SIGTERM)
+    sys.exit()
+
+
+
+def reset_game():
+    if game is not None:
+        game.reset_game(force=True)
 
 
 def restart_paired_joycons():

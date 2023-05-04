@@ -13,7 +13,9 @@ const launchBtn = document.getElementById("launch-button");
 const autoplayBox = document.getElementById("autoplay-checkbox");
 const joyconRStatus = document.getElementById('joycon-r-status');
 const joyconLStatus = document.getElementById('joycon-l-status');
-const joyconReset = document.getElementById('reset-joycons')
+const joyconReset = document.getElementById('reset-joycons');
+const gameReset = document.getElementById('new-game');
+const quitGame = document.getElementById('quit-button');
 
 autoplayBox.addEventListener('change', function() {
     const xhr = new XMLHttpRequest();
@@ -167,8 +169,23 @@ function updateStatusLabels(response) {
   }
 }
 
+function resetGame() {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/reset_game');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send(JSON.stringify({"reset": "True"}));
+}
+
+function gameQuit() {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/quit_game');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send(JSON.stringify({"reset": "True"}));
+}
 
 // Add the click event listener to the button
 document.getElementById('connect-joycons').addEventListener('click', connectJoycons);
 joyconReset.addEventListener('click', resetJoycons);
+quitGame.addEventListener('click', gameQuit);
+gameReset.addEventListener('click', resetGame);
 
