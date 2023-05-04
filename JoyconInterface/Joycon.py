@@ -80,12 +80,12 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         self.side = side
         self.sfx = sfx_track
         self.state_function = self.piece_selection
+        self.stick_home = self.get_home()
         self.monitor_comm = queue.Queue()
         self.stick_monitor = StickMonitor(4, "Monitor", 4, side, self.stick_event, self, self.monitor_comm)
         self.stick_monitor.start()
 
         self.cursor = self.query_pieces()[0].get_location()
-        self.stick_home = self.get_home()
 
         self.selected = None
         self.upgrade_order = ["Queen", "Bishop", "Knight", "Rook"]
@@ -103,6 +103,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
     def cleanup(self):
         self.monitor_comm.put(0)
         self.stick_monitor.join()
+        self.active = False
 
     def get_home(self):
         home = [0, 0]

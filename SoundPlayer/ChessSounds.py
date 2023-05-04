@@ -39,32 +39,32 @@ class StandardChessBackground(BackgroundChannel):
 
 class IntroMusic(StandardChessBackground):
     assigned_channel = 0
-    song_lib = "SoundPlayer/GameSounds/Intro"
+    song_lib = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/Intro"
 
 
 class MidrollMusic(StandardChessBackground):
     assigned_channel = 1
-    song_lib = "SoundPlayer/GameSounds/Midroll"
+    song_lib = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/Midroll"
 
 
 class OutroMusic(StandardChessBackground):
     assigned_channel = 2
-    song_lib = "SoundPlayer/GameSounds/Outro"
+    song_lib = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/Outro"
 
 
 class CheckMusic(StandardChessBackground):
     assigned_channel = 3
-    song_lib = "SoundPlayer/GameSounds/Game Event Tracks/Check"
+    song_lib = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/Game Event Tracks/Check"
 
 
 class StalemateMusic(StandardChessBackground):
     assigned_channel = 2
-    song_lib = "SoundPlayer/GameSounds/Game Event Tracks/Stalemate"
+    song_lib = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/Game Event Tracks/Stalemate"
 
 
 class ChessSFX(SoundChannel):
     channel = 4
-    loc = "SoundPlayer/GameSounds/SFX"
+    loc = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/SFX"
 
     def __init__(self, sound_interface):
         super().__init__(sound_interface, self.channel)
@@ -74,7 +74,7 @@ class ChessSFX(SoundChannel):
 
 class Ryan(SoundChannel):
     channel = 5
-    loc = "SoundPlayer/GameSounds/SFX/Ryan"
+    loc = "/root/PycharmProjects/ChessBoard/SoundPlayer/GameSounds/SFX/Ryan"
 
     def __init__(self, sound_interface):
         super().__init__(sound_interface, self.channel)
