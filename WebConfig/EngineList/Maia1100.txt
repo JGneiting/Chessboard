@@ -1,0 +1,3 @@
+Name: Maia1100
+ELO: 1100
+Path: Engines/maia1100.py
