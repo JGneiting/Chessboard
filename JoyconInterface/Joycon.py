@@ -63,7 +63,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
     controller_count = 1
     rumble_type = RumbleData(400, 800, .8)
 
-    def __init__(self, side, game_interface, light_interface=None, sfx_track=None):
+    def __init__(self, side, game_interface, light_interface=None, sfx_track=None, color="white"):
         if side == "LEFT":
             id_ = get_L_id()
             self.delta = -1
@@ -71,7 +71,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
             id_ = get_R_id()
             self.delta = 1
         ButtonEventJoyCon.__init__(self, *id_, track_sticks=True)
-        Player.__init__(self, game_interface)
+        Player.__init__(self, game_interface, color)
         self.enable_vibration()
         self.set_player_lamp(self.controller_count)
         self.controller_count += 1
@@ -80,12 +80,12 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
         self.side = side
         self.sfx = sfx_track
         self.state_function = self.piece_selection
+        self.stick_home = self.get_home()
         self.monitor_comm = queue.Queue()
         self.stick_monitor = StickMonitor(4, "Monitor", 4, side, self.stick_event, self, self.monitor_comm)
         self.stick_monitor.start()
 
         self.cursor = self.query_pieces()[0].get_location()
-        self.stick_home = self.get_home()
 
         self.selected = None
         self.upgrade_order = ["Queen", "Bishop", "Knight", "Rook"]
@@ -103,6 +103,7 @@ class StandardChessJoycon(ButtonEventJoyCon, RumbleJoyCon, Player):
     def cleanup(self):
         self.monitor_comm.put(0)
         self.stick_monitor.join()
+        self.active = False
 
     def get_home(self):
         home = [0, 0]

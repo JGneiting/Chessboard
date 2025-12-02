@@ -4,8 +4,8 @@ from GameFiles.GameInterface import Player
 class Demo(Player):
     move_list = []
 
-    def __init__(self, interface):
-        super().__init__(interface)
+    def __init__(self, interface, color):
+        super().__init__(interface, color)
         self.current_move = 0
 
     def my_turn(self):

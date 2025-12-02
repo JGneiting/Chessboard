@@ -7,8 +7,10 @@ import pygame
 class SoundController:
 
     def __init__(self):
-        pygame.mixer.init(buffer=4096, channels=10, size=-16)
-        # pygame.init()
+        pygame.init()
+        pygame.quit()
+        pygame.mixer.pre_init(buffer=4096, channels=10, size=-16)
+        pygame.mixer.init()
 
         self.interface = SoundInterface()
         self.intro_track = IntroMusic(self.interface)
