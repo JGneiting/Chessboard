@@ -3,7 +3,7 @@
 
 A physical chessboard that uses electromagnets and a motorized XY-axis system to autonomously move chess pieces, allowing players to enjoy chess without physically touching the pieces.
 
-![Board with Lights](docs/images/board_lights.jpg)
+![Board with Lights](docs/images/board_lights.png)
 
 ## Project Description
 
@@ -145,6 +145,10 @@ The potential for such a system is limitless. If sister boards were created, it 
 ## Technical Details
 
 ### Software Architecture
+
+**📖 [Full Architecture Documentation](ARCHITECTURE.md)** - Detailed software architecture with diagrams, data flow examples, and technical deep-dives.
+
+**Module Overview**:
 
 ```
 ├── BoardFiles/              # Hardware control layer
